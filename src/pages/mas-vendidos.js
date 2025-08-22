@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import * as XLSX from 'xlsx';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -490,6 +491,50 @@ export default function MasVendidos({ productosIniciales, error: serverError }) 
             </div>
           ) : (
             <div className="table-container">
+              <div className="flex justify-between items-center mb-4">
+                <div className="text-sm text-gray-300">
+                  Mostrando {datosFiltrados.length} productos más vendidos
+                </div>
+                <button
+                  onClick={() => {
+                    const datosExcel = datosFiltrados.map((item, index) => ({
+                      'Ranking': index + 1,
+                      'Nombre': item.nombre,
+                      'SKU': item.sku || 'N/A',
+                      'Código': item.internal_code || 'N/A',
+                      'Descripción': item.descripcion || 'N/A',
+                      'Cantidad Vendida': item.cantidad_vendida,
+                      'Valor Vendido': item.valor_vendido,
+                      'Número de Ventas': item.numero_ventas,
+                      'Frecuencia Diaria': item.frecuencia_venta_diaria.toFixed(2),
+                      'Stock Actual': item.stock_actual,
+                      'Stock Mínimo': item.minimum_stock,
+                      'Margen Real (%)': item.margen_real.toFixed(1),
+                      'Margen Teórico (%)': item.margen_ganancia.toFixed(1),
+                      'Primera Venta': item.primera_venta_en_rango ? new Date(item.primera_venta_en_rango).toLocaleDateString('es-ES') : 'N/A',
+                      'Última Venta': item.ultima_venta_en_rango ? new Date(item.ultima_venta_en_rango).toLocaleDateString('es-ES') : 'N/A',
+                      'Estado Stock': item.stock_actual <= 0 ? 'SIN STOCK' :
+                                    item.stock_actual <= item.minimum_stock ? 'BAJO' :
+                                    item.stock_actual <= item.minimum_stock * 2 ? 'MEDIO' : 'OK'
+                    }));
+                    
+                    const wb = XLSX.utils.book_new();
+                    const ws = XLSX.utils.json_to_sheet(datosExcel);
+                    XLSX.utils.book_append_sheet(wb, ws, 'Más Vendidos');
+                    
+                    const fecha = new Date().toISOString().split('T')[0];
+                    const nombreArchivo = `Mas_Vendidos_${tipoAnalisis === 'valor' ? 'Por_Valor' : 'Por_Cantidad'}_${fecha}.xlsx`;
+                    XLSX.writeFile(wb, nombreArchivo);
+                  }}
+                  className="btn-secondary px-4 py-2 text-sm flex items-center space-x-2"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                  <span>Exportar Excel</span>
+                </button>
+              </div>
+              
               <table className="min-w-full divide-y divide-gray-200">
                 <thead>
                   <tr>
@@ -521,7 +566,7 @@ export default function MasVendidos({ productosIniciales, error: serverError }) 
                 </thead>
                 <tbody>
                   {datosFiltrados.length > 0 ? (
-                    datosFiltrados.map((item, index) => (
+                    datosFiltrados.slice(0, 100).map((item, index) => (
                       <tr key={`${item.id}-${item.sede}`} className={index < 3 ? 'bg-yellow-900/10' : ''}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>

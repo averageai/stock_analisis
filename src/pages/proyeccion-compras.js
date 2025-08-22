@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import * as XLSX from 'xlsx';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -614,113 +615,153 @@ export default function ProyeccionCompras({ proyeccionInicial, error: serverErro
             <div className="status-bar status-bar-danger">
               <p>Error: {error}</p>
             </div>
-          ) : (
+                    ) : (
             <div className="table-container">
+              <div className="flex justify-between items-center mb-4">
+                <div className="text-sm text-gray-300">
+                  Mostrando {datosFiltrados.length} productos
+                </div>
+                <button
+                  onClick={() => {
+                    // Función de exportación básica
+                    const datosExcel = datosFiltrados.map(item => ({
+                      'Nombre': item.nombre,
+                      'SKU': item.sku || 'N/A',
+                      'Código': item.internal_code || 'N/A',
+                      'Compras en Rango': item.numero_compras_en_rango,
+                      'Vendido desde Compra': item.vendido_desde_compra,
+                      'Frecuencia/día': item.frecuencia_venta_diaria.toFixed(2),
+                      'Stock Actual': item.ignorar_stock ? 'Ignorado' : item.stock_actual,
+                      'Días Restantes': item.dias_inventario_restante === null ? 'N/A' : item.dias_inventario_restante,
+                      'Sugerido Comprar': item.sugerido_comprar,
+                      'Estado': item.dias_inventario_restante === null ? 'HISTÓRICO' : 
+                               item.dias_inventario_restante <= 7 ? 'CRÍTICO' :
+                               item.dias_inventario_restante <= 14 ? 'URGENTE' :
+                               item.dias_inventario_restante <= 30 ? 'ATENCIÓN' : 'OK'
+                    }));
+                    
+                    const wb = XLSX.utils.book_new();
+                    const ws = XLSX.utils.json_to_sheet(datosExcel);
+                    XLSX.utils.book_append_sheet(wb, ws, 'Proyección Compras');
+                    
+                    const fecha = new Date().toISOString().split('T')[0];
+                    const nombreArchivo = `Proyeccion_Compras_${fecha}.xlsx`;
+                    XLSX.writeFile(wb, nombreArchivo);
+                  }}
+                  className="btn-secondary px-4 py-2 text-sm flex items-center space-x-2"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                  <span>Exportar Excel</span>
+                </button>
+              </div>
+              
               <table className="min-w-full divide-y divide-gray-200">
-                                 <thead>
-                   <tr>
-                                           <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                        Producto {ordenarPor === 'nombre' && (ordenDireccion === 'asc' ? '↑' : '↓')}
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                         Compras en Rango
-                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                        Vendido desde Compra {ordenarPor === 'vendido' && (ordenDireccion === 'asc' ? '↑' : '↓')}
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                        Frecuencia/día {ordenarPor === 'frecuencia' && (ordenDireccion === 'asc' ? '↑' : '↓')}
-                      </th>
-                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                       Stock Actual
-                     </th>
-                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                       Días Restantes
-                     </th>
-                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                       Sugerido Comprar
-                     </th>
-                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                       Estado
-                     </th>
-                   </tr>
-                 </thead>
+                <thead>
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Producto {ordenarPor === 'nombre' && (ordenDireccion === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Compras en Rango
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Vendido desde Compra {ordenarPor === 'vendido' && (ordenDireccion === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Frecuencia/día {ordenarPor === 'frecuencia' && (ordenDireccion === 'asc' ? '↑' : '↓')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Stock Actual
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Días Restantes
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Sugerido Comprar
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                      Estado
+                    </th>
+                  </tr>
+                </thead>
                 <tbody>
                   {datosFiltrados.length > 0 ? (
-                    datosFiltrados.map((item) => (
+                    datosFiltrados.slice(0, 100).map((item) => (
                       <tr key={`${item.id}-${item.sede}`}>
-                                                 <td className="px-6 py-4 whitespace-nowrap">
-                           <div>
-                             <div className="text-sm font-medium text-white">
-                               {item.nombre}
-                             </div>
-                             <div className="text-sm text-gray-300">
-                               SKU: {item.sku || 'N/A'} | Código: {item.internal_code || 'N/A'}
-                             </div>
-                           </div>
-                         </td>
-                                                   <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                            <div>
-                              <div className="font-medium">
-                                {item.numero_compras_en_rango} compra{item.numero_compras_en_rango > 1 ? 's' : ''}
-                              </div>
-                                                             <div className="text-xs text-gray-300">
-                                 Total: {formatNumber(item.cantidad_total_comprada_en_rango)} unidades
-                               </div>
-                              <div className="text-xs text-gray-300">
-                                Primera: {formatDate(item.primera_compra_en_rango)}
-                              </div>
-                              <div className="text-xs text-gray-300">
-                                Última: {formatDate(item.ultima_compra_en_rango)}
-                              </div>
-                              {item.numero_compras_en_rango > 1 && (
-                                <div className="text-xs text-blue-400">
-                                  Promedio: ${item.precio_promedio_compra?.toFixed(2) || 'N/A'}
-                                </div>
-                              )}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          <div className="text-sm font-medium text-white">
+                            {item.nombre}
+                          </div>
+                          <div className="text-sm text-gray-300">
+                            SKU: {item.sku || 'N/A'} | Código: {item.internal_code || 'N/A'}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        <div>
+                          <div className="font-medium">
+                            {item.numero_compras_en_rango} compra{item.numero_compras_en_rango > 1 ? 's' : ''}
+                          </div>
+                          <div className="text-xs text-gray-300">
+                            Total: {formatNumber(item.cantidad_total_comprada_en_rango)} unidades
+                          </div>
+                          <div className="text-xs text-gray-300">
+                            Primera: {formatDate(item.primera_compra_en_rango)}
+                          </div>
+                          <div className="text-xs text-gray-300">
+                            Última: {formatDate(item.ultima_compra_en_rango)}
+                          </div>
+                          {item.numero_compras_en_rango > 1 && (
+                            <div className="text-xs text-blue-400">
+                              Promedio: ${item.precio_promedio_compra?.toFixed(2) || 'N/A'}
                             </div>
-                          </td>
-                         <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                           <div>
-                             <div>{formatNumber(item.vendido_desde_compra)}</div>
-                             <div className="text-xs text-gray-300">
-                               {formatNumber(item.numero_ventas)} ventas
-                             </div>
-                           </div>
-                         </td>
-                         <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                           {item.frecuencia_venta_diaria.toFixed(2)}/día
-                         </td>
-                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                           {item.ignorar_stock ? (
-                             <span className="text-gray-500 italic">Ignorado</span>
-                           ) : (
-                             formatNumber(item.stock_actual)
-                           )}
-                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {item.dias_inventario_restante === null ? (
-                            <span className="text-gray-500 italic text-sm">N/A</span>
-                          ) : (
-                            <span className={`text-sm ${getUrgencyClass(item.dias_inventario_restante)}`}>
-                              {item.dias_inventario_restante} días
-                            </span>
                           )}
-                        </td>
-                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                           {formatNumber(item.sugerido_comprar)}
-                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {item.dias_inventario_restante === null ? (
-                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
-                              HISTÓRICO
-                            </span>
-                          ) : (
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getUrgencyClass(item.dias_inventario_restante).replace('text-', 'bg-').replace('font-bold', '').replace('font-semibold', '')} bg-opacity-10`}>
-                              {getUrgencyText(item.dias_inventario_restante)}
-                            </span>
-                          )}
-                        </td>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        <div>
+                          <div>{formatNumber(item.vendido_desde_compra)}</div>
+                          <div className="text-xs text-gray-300">
+                            {formatNumber(item.numero_ventas)} ventas
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        {item.frecuencia_venta_diaria.toFixed(2)}/día
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        {item.ignorar_stock ? (
+                          <span className="text-gray-500 italic">Ignorado</span>
+                        ) : (
+                          formatNumber(item.stock_actual)
+                        )}
+                      </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                        {item.dias_inventario_restante === null ? (
+                          <span className="text-gray-500 italic text-sm">N/A</span>
+                        ) : (
+                          <span className={`text-sm ${getUrgencyClass(item.dias_inventario_restante)}`}>
+                            {item.dias_inventario_restante} días
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        {formatNumber(item.sugerido_comprar)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {item.dias_inventario_restante === null ? (
+                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
+                            HISTÓRICO
+                          </span>
+                        ) : (
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getUrgencyClass(item.dias_inventario_restante).replace('text-', 'bg-').replace('font-bold', '').replace('font-semibold', '')} bg-opacity-10`}>
+                            {getUrgencyText(item.dias_inventario_restante)}
+                          </span>
+                        )}
+                      </td>
                       </tr>
                     ))
                   ) : (

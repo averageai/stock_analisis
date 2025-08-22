@@ -1,23 +1,23 @@
 const { Pool } = require('pg');
 
-// Configuración de bases de datos - Solo sedes en producción
+// Configuración de bases de datos - Usar variables de entorno en producción
 const dbConfigs = {
   manizales: {
-    host: '5.161.103.230', 
-    port: 7717,
-    user: 'vercel_user',
-    password: 'non@ver@ge',
-    database: 'crsitaleriamanizales_complete',
+    host: process.env.DB_HOST || '5.161.103.230', 
+    port: process.env.DB_PORT || 7717,
+    user: process.env.DB_USER || 'vercel_user',
+    password: process.env.DB_PASSWORD || 'non@ver@ge',
+    database: process.env.DB_NAME_MANIZALES || 'crsitaleriamanizales_complete',
     ssl: {
       rejectUnauthorized: false
     }
   },
   ladorada: {
-    host: '5.161.103.230',
-    port: 7717,
-    user: 'vercel_user',
-    password: 'non@ver@ge',
-    database: 'cristaleriaprod_complete',
+    host: process.env.DB_HOST || '5.161.103.230',
+    port: process.env.DB_PORT || 7717,
+    user: process.env.DB_USER || 'vercel_user',
+    password: process.env.DB_PASSWORD || 'non@ver@ge',
+    database: process.env.DB_NAME_LADORADA || 'cristaleriaprod_complete',
     ssl: {
       rejectUnauthorized: false
     }
@@ -1258,10 +1258,10 @@ async function executeQuery(environment, query, params = []) {
           stock_actual: producto.stock_actual,
           margen_ganancia: margenGanancia,
           valor_stock_obsoleto: valorStockObsoleto,
-          ultima_venta_fecha: producto.ultima_venta_fecha?.toISOString(),
-          ultimo_movimiento_fecha: producto.ultimo_movimiento_fecha?.toISOString(),
-          ultima_compra_fecha: producto.ultima_compra_fecha?.toISOString(),
-          ultima_actividad_general: producto.ultima_actividad_general?.toISOString(),
+          ultima_venta_fecha: producto.ultima_venta_fecha ? producto.ultima_venta_fecha.toISOString() : null,
+          ultimo_movimiento_fecha: producto.ultimo_movimiento_fecha ? producto.ultimo_movimiento_fecha.toISOString() : null,
+          ultima_compra_fecha: producto.ultima_compra_fecha ? producto.ultima_compra_fecha.toISOString() : null,
+          ultima_actividad_general: producto.ultima_actividad_general ? producto.ultima_actividad_general.toISOString() : null,
           dias_sin_actividad: diasSinActividad,
           dias_sin_ventas: diasSinVentas,
           dias_sin_movimientos: diasSinMovimientos,
@@ -1453,9 +1453,9 @@ async function executeQuery(environment, query, params = []) {
           margen_real: margenReal,
           precio_promedio_venta: producto.precio_promedio_venta,
           precio_promedio_compra: producto.precio_promedio_compra,
-          primera_venta_en_rango: producto.primera_venta_en_rango?.toISOString(),
-          ultima_venta_en_rango: producto.ultima_venta_en_rango?.toISOString(),
-          ultima_compra_fecha: producto.ultima_compra_fecha?.toISOString(),
+          primera_venta_en_rango: producto.primera_venta_en_rango ? producto.primera_venta_en_rango.toISOString() : null,
+          ultima_venta_en_rango: producto.ultima_venta_en_rango ? producto.ultima_venta_en_rango.toISOString() : null,
+          ultima_compra_fecha: producto.ultima_compra_fecha ? producto.ultima_compra_fecha.toISOString() : null,
           dias_rango_analisis: diasRango,
           frecuencia_venta_diaria: frecuenciaVentaDiaria,
           dias_inventario_restante: diasInventarioRestante,

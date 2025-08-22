@@ -1,28 +1,49 @@
 import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 
-export default function Dashboard({ testData, error: serverError }) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(serverError || null);
+export default function Dashboard() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState({
     ladorada: { connected: false, data: null },
     manizales: { connected: false, data: null }
   });
 
+  // Efecto para cargar datos iniciales
   useEffect(() => {
-    if (testData) {
+    cargarDatosIniciales();
+  }, []);
+
+  // Función para cargar datos iniciales
+  const cargarDatosIniciales = async () => {
+    setLoading(true);
+    try {
+      const [responseLadorada, responseManizales] = await Promise.all([
+        fetch('/api/test-ventas?sede=ladorada'),
+        fetch('/api/test-ventas?sede=manizales')
+      ]);
+
+      const dataLadorada = await responseLadorada.json();
+      const dataManizales = await responseManizales.json();
+
       setConnectionStatus({
         ladorada: { 
-          connected: testData.ladorada && testData.ladorada.total_ventas > 0, 
-          data: testData.ladorada 
+          connected: dataLadorada.success && dataLadorada.data && dataLadorada.data.total_ventas > 0, 
+          data: dataLadorada.data 
         },
         manizales: { 
-          connected: testData.manizales && testData.manizales.total_ventas > 0, 
-          data: testData.manizales 
+          connected: dataManizales.success && dataManizales.data && dataManizales.data.total_ventas > 0, 
+          data: dataManizales.data 
         }
       });
+
+      setError(null);
+    } catch (err) {
+      setError('Error de conexión');
+    } finally {
+      setLoading(false);
     }
-  }, [testData]);
+  };
 
   const formatNumber = (num) => {
     if (!num && num !== 0) return 'N/A';
@@ -380,38 +401,4 @@ export default function Dashboard({ testData, error: serverError }) {
       </div>
     </Layout>
   );
-}
-
-// Función para obtener datos del servidor
-export async function getServerSideProps() {
-  try {
-    const { testVentas } = require('../lib/database');
-    
-    // Obtener datos de test para ambas sedes
-    const [testLadorada, testManizales] = await Promise.all([
-      testVentas('ladorada'),
-      testVentas('manizales')
-    ]);
-    
-    return {
-      props: {
-        testData: {
-          ladorada: testLadorada,
-          manizales: testManizales
-        }
-      }
-    };
-  } catch (error) {
-    console.error('Error en getServerSideProps:', error);
-    
-    return {
-      props: {
-        testData: {
-          ladorada: null,
-          manizales: null
-        },
-        error: error.message
-      }
-    };
-  }
 }

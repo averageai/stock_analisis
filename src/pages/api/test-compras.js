@@ -16,13 +16,12 @@ export default async function handler(req, res) {
       });
     }
 
-    // Obtener datos de compras
-    const compras = await testCompras(sede);
+    // Obtener datos de test
+    const data = await testCompras(sede);
 
     return res.status(200).json({
       success: true,
-      compras,
-      sede
+      data
     });
 
   } catch (error) {

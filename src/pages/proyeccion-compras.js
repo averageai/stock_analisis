@@ -6,15 +6,10 @@ import * as XLSX from 'xlsx';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-export default function ProyeccionCompras({ proyeccionInicial, error: serverError }) {
-  const [proyeccion, setProyeccion] = useState(() => {
-    if (proyeccionInicial && Array.isArray(proyeccionInicial)) {
-      return proyeccionInicial;
-    }
-    return [];
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(serverError || null);
+export default function ProyeccionCompras() {
+  const [proyeccion, setProyeccion] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [filtroSede, setFiltroSede] = useState('ladorada');
   const [rangoAnalisis, setRangoAnalisis] = useState(30);
   const [fechaInicio, setFechaInicio] = useState('');
@@ -25,12 +20,45 @@ export default function ProyeccionCompras({ proyeccionInicial, error: serverErro
   const [ordenDireccion, setOrdenDireccion] = useState('asc'); // 'asc', 'desc'
   const [ignorarStock, setIgnorarStock] = useState(false);
 
+  // Efecto para cargar datos iniciales
+  useEffect(() => {
+    cargarDatosIniciales();
+  }, []);
+
   // Efecto para recargar datos cuando cambien los filtros de rango
   useEffect(() => {
-    if (proyeccionInicial && proyeccionInicial.length > 0) {
+    if (proyeccion.length > 0) {
       recargarDatos();
     }
   }, [rangoAnalisis, modoRango, fechaInicio, fechaFin, filtroSede, ignorarStock]);
+
+  // Función para cargar datos iniciales
+  const cargarDatosIniciales = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        sede: filtroSede,
+        rango: rangoAnalisis,
+        modo: modoRango,
+        fechaInicio: fechaInicio,
+        fechaFin: fechaFin
+      });
+      
+      const response = await fetch(`/api/proyeccion-compras?${params}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setProyeccion(data.proyeccion);
+        setError(null);
+      } else {
+        setError(data.error || 'Error al cargar datos');
+      }
+    } catch (err) {
+      setError('Error de conexión');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Función para recargar datos con nuevos filtros
   const recargarDatos = async () => {
@@ -853,29 +881,4 @@ export default function ProyeccionCompras({ proyeccionInicial, error: serverErro
       </div>
     </Layout>
   );
-}
-
-// Función para obtener datos del servidor
-export async function getServerSideProps() {
-  try {
-    const { getProyeccionCompras } = require('../lib/database');
-    
-    // Obtener datos solo de La Dorada por defecto (30 días)
-    const proyeccionLadorada = await getProyeccionCompras('ladorada', 30, null, null, false);
-    
-    return {
-      props: {
-        proyeccionInicial: proyeccionLadorada
-      }
-    };
-  } catch (error) {
-    console.error('Error en getServerSideProps:', error);
-    
-    return {
-      props: {
-        proyeccionInicial: [],
-        error: error.message
-      }
-    };
-  }
 }

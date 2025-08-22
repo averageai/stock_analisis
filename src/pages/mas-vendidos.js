@@ -6,15 +6,10 @@ import * as XLSX from 'xlsx';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-export default function MasVendidos({ productosIniciales, error: serverError }) {
-  const [productos, setProductos] = useState(() => {
-    if (productosIniciales && Array.isArray(productosIniciales)) {
-      return productosIniciales;
-    }
-    return [];
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(serverError || null);
+export default function MasVendidos() {
+  const [productos, setProductos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [filtroSede, setFiltroSede] = useState('ladorada');
   const [rangoAnalisis, setRangoAnalisis] = useState(30);
   const [fechaInicio, setFechaInicio] = useState('');
@@ -24,12 +19,46 @@ export default function MasVendidos({ productosIniciales, error: serverError }) 
   const [ordenarPor, setOrdenarPor] = useState('cantidad_vendida');
   const [ordenDireccion, setOrdenDireccion] = useState('desc');
 
+  // Efecto para cargar datos iniciales
+  useEffect(() => {
+    cargarDatosIniciales();
+  }, []);
+
   // Efecto para recargar datos cuando cambien los filtros
   useEffect(() => {
-    if (productosIniciales && productosIniciales.length > 0) {
+    if (productos.length > 0) {
       recargarDatos();
     }
   }, [rangoAnalisis, modoRango, fechaInicio, fechaFin, filtroSede, tipoAnalisis]);
+
+  // Función para cargar datos iniciales
+  const cargarDatosIniciales = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        sede: filtroSede,
+        rango: rangoAnalisis,
+        modo: modoRango,
+        fechaInicio: fechaInicio,
+        fechaFin: fechaFin,
+        tipoAnalisis: tipoAnalisis
+      });
+      
+      const response = await fetch(`/api/mas-vendidos?${params}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setProductos(data.productosMasVendidos);
+        setError(null);
+      } else {
+        setError(data.error || 'Error al cargar datos');
+      }
+    } catch (err) {
+      setError('Error de conexión');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Función para recargar datos con nuevos filtros
   const recargarDatos = async () => {
@@ -723,29 +752,4 @@ export default function MasVendidos({ productosIniciales, error: serverError }) 
       </div>
     </Layout>
   );
-}
-
-// Función para obtener datos del servidor
-export async function getServerSideProps() {
-  try {
-    const { getProductosMasVendidos } = require('../lib/database');
-    
-    // Obtener datos solo de La Dorada por defecto (30 días, por cantidad)
-    const productosLadorada = await getProductosMasVendidos('ladorada', 30, null, null, 'cantidad');
-    
-    return {
-      props: {
-        productosIniciales: productosLadorada
-      }
-    };
-  } catch (error) {
-    console.error('Error en getServerSideProps:', error);
-    
-    return {
-      props: {
-        productosIniciales: [],
-        error: error.message
-      }
-    };
-  }
 }

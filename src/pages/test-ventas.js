@@ -1,11 +1,50 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 
-export default function TestVentas({ ventasData, comprasData, error: serverError }) {
+export default function TestVentas() {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(serverError || null);
-  const [ventas, setVentas] = useState(ventasData || {});
-  const [compras, setCompras] = useState(comprasData || {});
+  const [error, setError] = useState(null);
+  const [ventas, setVentas] = useState({});
+  const [compras, setCompras] = useState({});
+
+  // Efecto para cargar datos iniciales
+  useEffect(() => {
+    cargarDatosIniciales();
+  }, []);
+
+  // Función para cargar datos iniciales
+  const cargarDatosIniciales = async () => {
+    setLoading(true);
+    try {
+      const [responseVentasLadorada, responseVentasManizales, responseComprasLadorada, responseComprasManizales] = await Promise.all([
+        fetch('/api/test-ventas?sede=ladorada'),
+        fetch('/api/test-ventas?sede=manizales'),
+        fetch('/api/test-compras?sede=ladorada'),
+        fetch('/api/test-compras?sede=manizales')
+      ]);
+
+      const dataVentasLadorada = await responseVentasLadorada.json();
+      const dataVentasManizales = await responseVentasManizales.json();
+      const dataComprasLadorada = await responseComprasLadorada.json();
+      const dataComprasManizales = await responseComprasManizales.json();
+
+      setVentas({
+        ladorada: dataVentasLadorada.success ? dataVentasLadorada.data : null,
+        manizales: dataVentasManizales.success ? dataVentasManizales.data : null
+      });
+
+      setCompras({
+        ladorada: dataComprasLadorada.success ? dataComprasLadorada.data : null,
+        manizales: dataComprasManizales.success ? dataComprasManizales.data : null
+      });
+
+      setError(null);
+    } catch (err) {
+      setError('Error de conexión');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const testVentas = async (sede) => {
     setLoading(true);
@@ -14,7 +53,7 @@ export default function TestVentas({ ventasData, comprasData, error: serverError
       const data = await response.json();
       
       if (data.success) {
-        setVentas(prev => ({ ...prev, [sede]: data.ventas }));
+        setVentas(prev => ({ ...prev, [sede]: data.data }));
         setError(null);
       } else {
         setError(data.error || 'Error al cargar datos');
@@ -33,7 +72,7 @@ export default function TestVentas({ ventasData, comprasData, error: serverError
       const data = await response.json();
       
       if (data.success) {
-        setCompras(prev => ({ ...prev, [sede]: data.compras }));
+        setCompras(prev => ({ ...prev, [sede]: data.data }));
         setError(null);
       } else {
         setError(data.error || 'Error al cargar datos');
@@ -170,40 +209,4 @@ export default function TestVentas({ ventasData, comprasData, error: serverError
       </div>
     </Layout>
   );
-}
-
-export async function getServerSideProps() {
-  try {
-    const { testVentas, testCompras } = require('../lib/database');
-    
-    const [ventasLadorada, ventasManizales, comprasLadorada, comprasManizales] = await Promise.all([
-      testVentas('ladorada'),
-      testVentas('manizales'),
-      testCompras('ladorada'),
-      testCompras('manizales')
-    ]);
-    
-    return {
-      props: {
-        ventasData: {
-          ladorada: ventasLadorada,
-          manizales: ventasManizales
-        },
-        comprasData: {
-          ladorada: comprasLadorada,
-          manizales: comprasManizales
-        }
-      }
-    };
-  } catch (error) {
-    console.error('Error en getServerSideProps:', error);
-    
-    return {
-      props: {
-        ventasData: {},
-        comprasData: {},
-        error: error.message
-      }
-    };
-  }
 }

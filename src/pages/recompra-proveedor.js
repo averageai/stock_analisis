@@ -530,9 +530,8 @@ export default function RecompraProveedor() {
                    <option value="90">Últimos 90 días</option>
                  </select>
                </div>
-               {/* Ignorar stock - Solo para La Dorada */}
-               {sede === 'ladorada' && (
-                                <div className="flex items-center space-x-3">
+               {/* Ignorar stock - Disponible para ambas sedes */}
+               <div className="flex items-center space-x-3">
                  <label className="flex items-center">
                    <input
                      type="checkbox"
@@ -545,17 +544,12 @@ export default function RecompraProveedor() {
                    </span>
                  </label>
                </div>
-               )}
              </div>
              <p className="text-xs text-gray-400 mt-2">
                <strong>Filtro por días:</strong> Analiza solo las facturas de los últimos días seleccionados. Útil para análisis recientes.
-               {sede === 'ladorada' && (
-                 <>
-                   <br />
-                   <strong>Ignorar stock:</strong> Cuando está habilitado, el análisis se basa únicamente en las cantidades compradas y vendidas, 
-                   sin considerar el inventario actual. Útil para análisis histórico de comportamiento de ventas.
-                 </>
-               )}
+               <br />
+               <strong>Ignorar stock:</strong> Cuando está habilitado, el análisis se basa únicamente en las cantidades compradas y vendidas, 
+               sin considerar el inventario actual. Útil para análisis histórico de comportamiento de ventas.
              </p>
            </div>
 

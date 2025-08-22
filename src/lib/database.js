@@ -1077,7 +1077,7 @@ async function executeQuery(environment, query, params = []) {
   }
 
   // Función para obtener productos sin movimientos en los últimos X días
-  async function getProductosSinMovimiento(sede, rangoDias = 30, fechaInicio = null, fechaFin = null) {
+  async function getProductosSinMovimiento(sede, rangoDias = 30, fechaInicio = null, fechaFin = null, ignorarStock = false) {
     try {
       console.log(`[DEBUG] Productos sin movimiento:`, { sede, rangoDias, fechaInicio, fechaFin });
       
@@ -1282,7 +1282,7 @@ async function executeQuery(environment, query, params = []) {
   }
 
   // Función para obtener productos más vendidos por cantidad o valor
-  async function getProductosMasVendidos(sede, rangoDias = 30, fechaInicio = null, fechaFin = null, tipoAnalisis = 'cantidad') {
+  async function getProductosMasVendidos(sede, rangoDias = 30, fechaInicio = null, fechaFin = null, tipoAnalisis = 'cantidad', ignorarStock = false) {
     try {
       console.log(`[DEBUG] Productos más vendidos:`, { sede, rangoDias, fechaInicio, fechaFin, tipoAnalisis });
       
@@ -1474,6 +1474,232 @@ async function executeQuery(environment, query, params = []) {
     }
   }
 
+  // Función para buscar productos por código o nombre
+  async function buscarProductos(sede, busqueda) {
+    try {
+      console.log(`[DEBUG] Búsqueda de productos en ${sede}:`, { busqueda });
+      
+      // HeadquarterId correctos para cada base de datos
+      const headquarterIds = sede === 'ladorada' ? [6, 3, 2, 5] : [3, 1, 2];
+      
+      // Query para buscar productos por SKU, código interno o nombre
+      const queryBusqueda = `
+        SELECT DISTINCT
+          p.id,
+          p.name as nombre,
+          p.description as descripcion,
+          p.cost as costo,
+          p.retail_price as precio_venta,
+          p.sku,
+          p.internal_code,
+          p.minimum_stock,
+          COALESCE(s.stock_actual, 0) as stock_actual
+        FROM product p
+        LEFT JOIN (
+          SELECT 
+            "productId",
+            SUM(quantity) as stock_actual
+          FROM stock 
+          WHERE "headquarterId" = ANY($1)
+          GROUP BY "productId"
+        ) s ON p.id = s."productId"
+        WHERE p.deleted_at IS NULL
+          AND (
+            LOWER(p.sku) LIKE LOWER($2) OR
+            LOWER(p.internal_code) LIKE LOWER($2) OR
+            LOWER(p.name) LIKE LOWER($2)
+          )
+        ORDER BY p.name
+        LIMIT 50
+      `;
+      
+      const terminoBusqueda = `%${busqueda}%`;
+      const resultados = await executeQuery(sede, queryBusqueda, [headquarterIds, terminoBusqueda]);
+      
+      console.log(`[DEBUG] Productos encontrados en ${sede}:`, {
+        busqueda,
+        totalResultados: resultados.length,
+        muestraResultados: resultados.slice(0, 3).map(r => ({
+          id: r.id,
+          nombre: r.nombre,
+          sku: r.sku,
+          internal_code: r.internal_code
+        }))
+      });
+      
+      return resultados;
+    } catch (error) {
+      console.error(`Error buscando productos en ${sede}:`, error);
+      throw error;
+    }
+  }
+
+  // Función para analizar un producto individual
+  async function analizarProductoIndividual(sede, productId, ignorarStock = false) {
+    try {
+      console.log(`[DEBUG] Análisis individual de producto en ${sede}:`, { productId, ignorarStock });
+      
+      // HeadquarterId correctos para cada base de datos
+      const headquarterIds = sede === 'ladorada' ? [6, 3, 2, 5] : [3, 1, 2];
+      
+      // Query para obtener información completa del producto
+      const queryAnalisis = `
+        WITH compras_producto AS (
+          -- Compras del producto específico
+          SELECT 
+            SUM(pp.quantity) as cantidad_comprada,
+            COUNT(DISTINCT pur.id) as numero_compras,
+            MIN(pur.created_at) as primera_compra,
+            MAX(pur.created_at) as ultima_compra,
+            AVG(pp.unit_price) as precio_promedio_compra
+          FROM product_purchase pp
+          JOIN purchase pur ON pp."purchaseId" = pur.id
+          WHERE pp."productId" = $1
+            AND pur."headquarterId" = ANY($2)
+            AND pur.deleted_at IS NULL
+        ),
+        ventas_producto AS (
+          -- Ventas del producto específico
+          SELECT 
+            SUM(ps.quantity) as cantidad_vendida,
+            COUNT(DISTINCT s.id) as numero_ventas,
+            MIN(s.created_at) as primera_venta,
+            MAX(s.created_at) as ultima_venta,
+            AVG(ps.total_price / ps.quantity) as precio_promedio_venta
+          FROM product_sell ps
+          JOIN sell s ON ps."sellId" = s.id
+          WHERE ps."productId" = $1
+            AND s."headquarterId" = ANY($2)
+            AND s.deleted_at IS NULL
+        ),
+        stock_producto AS (
+          -- Stock actual del producto
+          SELECT 
+            SUM(quantity) as stock_actual
+          FROM stock 
+          WHERE "productId" = $1
+            AND "headquarterId" = ANY($2)
+        )
+        SELECT 
+          p.id,
+          p.name as nombre,
+          p.description as descripcion,
+          p.cost as costo,
+          p.retail_price as precio_venta,
+          p.sku,
+          p.internal_code,
+          p.minimum_stock,
+          COALESCE(sp.stock_actual, 0) as stock_actual,
+          COALESCE(cp.cantidad_comprada, 0) as cantidad_comprada,
+          COALESCE(cp.numero_compras, 0) as numero_compras,
+          COALESCE(cp.primera_compra, '1900-01-01'::timestamp) as primera_compra,
+          COALESCE(cp.ultima_compra, '1900-01-01'::timestamp) as ultima_compra,
+          COALESCE(cp.precio_promedio_compra, 0) as precio_promedio_compra,
+          COALESCE(vp.cantidad_vendida, 0) as cantidad_vendida,
+          COALESCE(vp.numero_ventas, 0) as numero_ventas,
+          COALESCE(vp.primera_venta, '1900-01-01'::timestamp) as primera_venta,
+          COALESCE(vp.ultima_venta, '1900-01-01'::timestamp) as ultima_venta,
+          COALESCE(vp.precio_promedio_venta, 0) as precio_promedio_venta
+        FROM product p
+        LEFT JOIN compras_producto cp ON true
+        LEFT JOIN ventas_producto vp ON true
+        LEFT JOIN stock_producto sp ON true
+        WHERE p.id = $1
+          AND p.deleted_at IS NULL
+      `;
+      
+      const resultados = await executeQuery(sede, queryAnalisis, [productId, headquarterIds]);
+      
+      if (resultados.length === 0) {
+        throw new Error('Producto no encontrado');
+      }
+      
+      const producto = resultados[0];
+      
+      // Calcular métricas adicionales
+      const hoy = new Date();
+      const primeraCompra = new Date(producto.primera_compra);
+      const ultimaVenta = new Date(producto.ultima_venta);
+      
+      // Calcular días transcurridos desde la primera compra
+      const diasDesdePrimeraCompra = Math.max(1, Math.floor((hoy - primeraCompra) / (1000 * 60 * 60 * 24)));
+      
+      // Calcular frecuencia diaria de venta
+      const frecuenciaDiaria = diasDesdePrimeraCompra > 0 ? producto.cantidad_vendida / diasDesdePrimeraCompra : 0;
+      
+      // Calcular días sin venta
+      const diasSinVenta = Math.floor((hoy - ultimaVenta) / (1000 * 60 * 60 * 24));
+      
+      // Calcular días de inventario restante
+      const diasInventarioRestante = ignorarStock ? null : (frecuenciaDiaria > 0 ? 
+        Math.floor(producto.stock_actual / frecuenciaDiaria) : 999);
+      
+      // Calcular sugerencia de compra
+      const proyeccionVentas30Dias = frecuenciaDiaria * 30;
+      const margenSeguridad = proyeccionVentas30Dias * 0.2;
+      const sugerenciaCompra = ignorarStock ? 
+        Math.max(0, Math.ceil(proyeccionVentas30Dias + margenSeguridad)) :
+        Math.max(0, Math.ceil(proyeccionVentas30Dias - producto.stock_actual + margenSeguridad));
+      
+      // Calcular margen real
+      const margenReal = producto.precio_promedio_venta > 0 ? 
+        ((producto.precio_promedio_venta - producto.costo) / producto.precio_promedio_venta) * 100 : 0;
+      
+      // Determinar estado
+      let estado = 'HISTÓRICO';
+      if (diasInventarioRestante !== null) {
+        if (diasInventarioRestante <= 7) estado = 'CRÍTICO';
+        else if (diasInventarioRestante <= 14) estado = 'URGENTE';
+        else if (diasInventarioRestante <= 30) estado = 'ATENCIÓN';
+        else estado = 'OK';
+      }
+      
+      const analisis = {
+        id: producto.id,
+        nombre: producto.nombre,
+        descripcion: producto.descripcion,
+        sku: producto.sku,
+        internal_code: producto.internal_code,
+        costo: producto.costo,
+        precio_venta: producto.precio_venta,
+        minimum_stock: producto.minimum_stock,
+        stock_actual: producto.stock_actual,
+        cantidad_comprada: producto.cantidad_comprada,
+        numero_compras: producto.numero_compras,
+        cantidad_vendida: producto.cantidad_vendida,
+        numero_ventas: producto.numero_ventas,
+        precio_promedio_compra: producto.precio_promedio_compra,
+        precio_promedio_venta: producto.precio_promedio_venta,
+        primera_compra: producto.primera_compra !== '1900-01-01T00:00:00.000Z' ? producto.primera_compra.toISOString() : null,
+        ultima_compra: producto.ultima_compra !== '1900-01-01T00:00:00.000Z' ? producto.ultima_compra.toISOString() : null,
+        primera_venta: producto.primera_venta !== '1900-01-01T00:00:00.000Z' ? producto.primera_venta.toISOString() : null,
+        ultima_venta: producto.ultima_venta !== '1900-01-01T00:00:00.000Z' ? producto.ultima_venta.toISOString() : null,
+        dias_desde_primera_compra: diasDesdePrimeraCompra,
+        frecuencia_diaria: frecuenciaDiaria,
+        dias_sin_venta: diasSinVenta,
+        dias_inventario_restante: diasInventarioRestante,
+        sugerido_comprar: sugerenciaCompra,
+        margen_ganancia: margenReal,
+        estado: estado,
+        sede: sede,
+        ignorar_stock: ignorarStock
+      };
+      
+      console.log(`[DEBUG] Análisis completado para producto ${productId} en ${sede}:`, {
+        nombre: analisis.nombre,
+        frecuencia_diaria: analisis.frecuencia_diaria,
+        dias_inventario_restante: analisis.dias_inventario_restante,
+        sugerido_comprar: analisis.sugerido_comprar,
+        estado: analisis.estado
+      });
+      
+      return analisis;
+    } catch (error) {
+      console.error(`Error analizando producto individual en ${sede}:`, error);
+      throw error;
+    }
+  }
+
  export {
    createConnection,
    executeQuery,
@@ -1490,5 +1716,7 @@ async function executeQuery(environment, query, params = []) {
    verificarPermisosDB,
    testVentas,
    testCompras,
+   buscarProductos,
+   analizarProductoIndividual,
    dbConfigs
  };

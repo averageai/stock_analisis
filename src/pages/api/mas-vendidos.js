@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { sede, rango, modo, fechaInicio, fechaFin, tipoAnalisis } = req.query;
+    const { sede, rango, modo, fechaInicio, fechaFin, tipoAnalisis, ignorarStock } = req.query;
 
     // Validar parámetros requeridos
     if (!sede || !['ladorada', 'manizales'].includes(sede)) {
@@ -55,7 +55,8 @@ export default async function handler(req, res) {
       rangoDias, 
       fechaInicioAnalisis, 
       fechaFinAnalisis,
-      tipoAnalisis
+      tipoAnalisis,
+      ignorarStock === 'true'
     );
 
     return res.status(200).json({

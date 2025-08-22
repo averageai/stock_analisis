@@ -18,6 +18,7 @@ export default function ProductosSinMovimiento() {
   const [filtroTipoInactividad, setFiltroTipoInactividad] = useState(['todos']);
   const [ordenarPor, setOrdenarPor] = useState('dias_sin_actividad');
   const [ordenDireccion, setOrdenDireccion] = useState('desc');
+  const [ignorarStock, setIgnorarStock] = useState(false);
 
   // Efecto para cargar datos iniciales
   useEffect(() => {
@@ -29,7 +30,7 @@ export default function ProductosSinMovimiento() {
     if (productos.length > 0) {
       recargarDatos();
     }
-  }, [rangoAnalisis, modoRango, fechaInicio, fechaFin, filtroSede]);
+  }, [rangoAnalisis, modoRango, fechaInicio, fechaFin, filtroSede, ignorarStock]);
 
   // Función para cargar datos iniciales
   const cargarDatosIniciales = async () => {
@@ -40,7 +41,8 @@ export default function ProductosSinMovimiento() {
         rango: rangoAnalisis,
         modo: modoRango,
         fechaInicio: fechaInicio,
-        fechaFin: fechaFin
+        fechaFin: fechaFin,
+        ignorarStock: ignorarStock ? 'true' : 'false'
       });
       
       const response = await fetch(`/api/productos-sin-movimiento?${params}`);
@@ -68,7 +70,8 @@ export default function ProductosSinMovimiento() {
         rango: rangoAnalisis,
         modo: modoRango,
         fechaInicio: fechaInicio,
-        fechaFin: fechaFin
+        fechaFin: fechaFin,
+        ignorarStock: ignorarStock ? 'true' : 'false'
       });
       
       const response = await fetch(`/api/productos-sin-movimiento?${params}`);
@@ -394,6 +397,19 @@ export default function ProductosSinMovimiento() {
                 </div>
               </>
             )}
+          </div>
+
+          {/* Opción para ignorar stock */}
+          <div className="mb-4">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={ignorarStock}
+                onChange={(e) => setIgnorarStock(e.target.checked)}
+                className="mr-2"
+              />
+              <span className="text-gray-300">Ignorar stock actual en análisis</span>
+            </label>
           </div>
 
           {/* Filtros y Ordenamiento */}

@@ -18,6 +18,7 @@ export default function MasVendidos() {
   const [tipoAnalisis, setTipoAnalisis] = useState('cantidad');
   const [ordenarPor, setOrdenarPor] = useState('cantidad_vendida');
   const [ordenDireccion, setOrdenDireccion] = useState('desc');
+  const [ignorarStock, setIgnorarStock] = useState(false);
 
   // Efecto para cargar datos iniciales
   useEffect(() => {
@@ -29,7 +30,7 @@ export default function MasVendidos() {
     if (productos.length > 0) {
       recargarDatos();
     }
-  }, [rangoAnalisis, modoRango, fechaInicio, fechaFin, filtroSede, tipoAnalisis]);
+  }, [rangoAnalisis, modoRango, fechaInicio, fechaFin, filtroSede, tipoAnalisis, ignorarStock]);
 
   // Función para cargar datos iniciales
   const cargarDatosIniciales = async () => {
@@ -41,7 +42,8 @@ export default function MasVendidos() {
         modo: modoRango,
         fechaInicio: fechaInicio,
         fechaFin: fechaFin,
-        tipoAnalisis: tipoAnalisis
+        tipoAnalisis: tipoAnalisis,
+        ignorarStock: ignorarStock ? 'true' : 'false'
       });
       
       const response = await fetch(`/api/mas-vendidos?${params}`);
@@ -70,7 +72,8 @@ export default function MasVendidos() {
         modo: modoRango,
         fechaInicio: fechaInicio,
         fechaFin: fechaFin,
-        tipoAnalisis: tipoAnalisis
+        tipoAnalisis: tipoAnalisis,
+        ignorarStock: ignorarStock ? 'true' : 'false'
       });
       
       const response = await fetch(`/api/mas-vendidos?${params}`);
@@ -381,6 +384,19 @@ export default function MasVendidos() {
                 </div>
               </>
             )}
+          </div>
+
+          {/* Opción para ignorar stock */}
+          <div className="mb-4">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={ignorarStock}
+                onChange={(e) => setIgnorarStock(e.target.checked)}
+                className="mr-2"
+              />
+              <span className="text-gray-300">Ignorar stock actual en análisis</span>
+            </label>
           </div>
 
           {/* Ordenamiento */}

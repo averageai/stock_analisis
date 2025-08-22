@@ -17,7 +17,7 @@ const dbConfigs = {
     port: 7717,
     user: 'vercel_user',
     password: 'non@ver@ge',
-    database: 'cristaleriaProd_complete',
+    database: 'cristaleriaprod_complete',
     ssl: {
       rejectUnauthorized: false
     }
@@ -188,7 +188,7 @@ async function executeQuery(environment, query, params = []) {
 }
 
     // Función para obtener proyección de compras por sede con rango configurable
-  async function getProyeccionCompras(sede, rangoDias = 30, fechaInicio = null, fechaFin = null) {
+  async function getProyeccionCompras(sede, rangoDias = 30, fechaInicio = null, fechaFin = null, ignorarStock = false) {
     try {
       console.log(`[DEBUG] Parámetros recibidos:`, { sede, rangoDias, fechaInicio, fechaFin });
       
@@ -353,16 +353,18 @@ async function executeQuery(environment, query, params = []) {
             producto.vendido_desde_compra / diasDesdePrimeraCompra : 0;
           
           // Calcular días de inventario restante basado en la frecuencia de venta
-          const diasInventarioRestante = frecuenciaVentaDiaria > 0 ? 
-            Math.floor(producto.stock_actual / frecuenciaVentaDiaria) : 999;
+          const diasInventarioRestante = ignorarStock ? null : (frecuenciaVentaDiaria > 0 ? 
+            Math.floor(producto.stock_actual / frecuenciaVentaDiaria) : 999);
           
           // Sugerir cantidad a comprar basado en:
           // 1. Proyección de ventas para 30 días (frecuencia * 30)
-          // 2. Menos el stock actual
+          // 2. Menos el stock actual (si no se ignora)
           // 3. Más un margen de seguridad del 20%
           const proyeccionVentas30Dias = frecuenciaVentaDiaria * 30;
           const margenSeguridad = proyeccionVentas30Dias * 0.2;
-          const sugeridoComprar = Math.max(0, Math.ceil(proyeccionVentas30Dias - producto.stock_actual + margenSeguridad));
+          const sugeridoComprar = ignorarStock ? 
+            Math.max(0, Math.ceil(proyeccionVentas30Dias + margenSeguridad)) :
+            Math.max(0, Math.ceil(proyeccionVentas30Dias - producto.stock_actual + margenSeguridad));
          
          // Calcular margen de ganancia
          const margenGanancia = producto.precio_venta > 0 ? 
@@ -435,10 +437,69 @@ async function executeQuery(environment, query, params = []) {
     }
   }
 
-  // Función para obtener proveedores disponibles
+  // Función para verificar permisos y estructura de la base de datos
+  async function verificarPermisosDB(sede) {
+    try {
+      console.log(`[DEBUG] Verificando permisos en ${sede}...`);
+      
+      // Verificar si podemos conectarnos
+      const pool = await createConnection(sede);
+      
+      // Verificar tablas disponibles
+      const queryTablas = `
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name IN ('provider', 'purchase', 'product', 'stock', 'sell', 'product_sell', 'product_purchase')
+        ORDER BY table_name
+      `;
+      
+      const tablas = await pool.query(queryTablas);
+      console.log(`[DEBUG] Tablas disponibles en ${sede}:`, tablas.rows);
+      
+      // Verificar permisos en tabla provider específicamente
+      try {
+        const queryProvider = `SELECT COUNT(*) FROM provider LIMIT 1`;
+        const providerTest = await pool.query(queryProvider);
+        console.log(`[DEBUG] Permisos en tabla provider ${sede}: OK`);
+      } catch (providerError) {
+        console.error(`[DEBUG] Error de permisos en tabla provider ${sede}:`, providerError.message);
+      }
+      
+      // Verificar estructura de provider si existe
+      try {
+        const queryEstructura = `
+          SELECT column_name, data_type 
+          FROM information_schema.columns 
+          WHERE table_name = 'provider' 
+          ORDER BY ordinal_position
+        `;
+        const estructura = await pool.query(queryEstructura);
+        console.log(`[DEBUG] Estructura tabla provider en ${sede}:`, estructura.rows);
+      } catch (estructuraError) {
+        console.error(`[DEBUG] Error obteniendo estructura de provider en ${sede}:`, estructuraError.message);
+      }
+      
+      await pool.end();
+      
+      return {
+        sede,
+        tablas: tablas.rows,
+        status: 'verificado'
+      };
+    } catch (error) {
+      console.error(`[DEBUG] Error verificando permisos en ${sede}:`, error);
+      throw error;
+    }
+  }
+
+  // Función para obtener proveedores disponibles con mejor manejo de errores
   async function getProveedores(sede) {
     try {
-      // Cargar proveedores directamente
+      console.log(`[DEBUG] Obteniendo proveedores de ${sede}...`);
+      
+      // Primero verificar permisos
+      await verificarPermisosDB(sede);
       
       const headquarterIds = sede === 'ladorada' ? [6, 3, 2, 5] : [3, 1, 2];
       
@@ -477,6 +538,47 @@ async function executeQuery(environment, query, params = []) {
       return proveedoresFormateados;
     } catch (error) {
       console.error(`Error obteniendo proveedores para ${sede}:`, error);
+      
+      // Si es un error de permisos, intentar una consulta alternativa
+      if (error.message.includes('permission denied') || error.message.includes('does not exist')) {
+        console.log(`[DEBUG] Intentando consulta alternativa para proveedores en ${sede}...`);
+        
+        try {
+          // Consulta alternativa sin JOIN directo con provider
+          const queryAlternativa = `
+            SELECT DISTINCT
+              pur."providerId" as id,
+              'Proveedor ' || pur."providerId" as nombre,
+              COUNT(DISTINCT pur.id) as total_facturas,
+              MIN(pur.created_at) as primera_compra,
+              MAX(pur.created_at) as ultima_compra,
+              COALESCE(SUM(pp.quantity), 0) as total_productos_comprados
+            FROM purchase pur
+            LEFT JOIN product_purchase pp ON pur.id = pp."purchaseId"
+            WHERE pur."headquarterId" = ANY($1)
+              AND pur.deleted_at IS NULL
+              AND pur."providerId" IS NOT NULL
+            GROUP BY pur."providerId"
+            ORDER BY pur."providerId"
+          `;
+          
+          const proveedoresAlt = await executeQuery(sede, queryAlternativa, [headquarterIds]);
+          
+          const proveedoresFormateados = proveedoresAlt.map(proveedor => ({
+            ...proveedor,
+            primera_compra: proveedor.primera_compra?.toISOString(),
+            ultima_compra: proveedor.ultima_compra?.toISOString()
+          }));
+          
+          console.log(`[DEBUG] Proveedores encontrados con consulta alternativa:`, proveedoresFormateados.length);
+          return proveedoresFormateados;
+          
+        } catch (errorAlt) {
+          console.error(`Error en consulta alternativa para proveedores en ${sede}:`, errorAlt);
+          throw new Error(`No se pueden obtener proveedores: ${error.message}. Consulta alternativa también falló: ${errorAlt.message}`);
+        }
+      }
+      
       throw error;
     }
   }
@@ -974,17 +1076,418 @@ async function executeQuery(environment, query, params = []) {
     }
   }
 
+  // Función para obtener productos sin movimientos en los últimos X días
+  async function getProductosSinMovimiento(sede, rangoDias = 30, fechaInicio = null, fechaFin = null) {
+    try {
+      console.log(`[DEBUG] Productos sin movimiento:`, { sede, rangoDias, fechaInicio, fechaFin });
+      
+      // HeadquarterId correctos para cada base de datos
+      const headquarterIds = sede === 'ladorada' ? [6, 3, 2, 5] : [3, 1, 2];
+      
+      // Calcular fechas del rango
+      let fechaInicioAnalisis, fechaFinAnalisis;
+      
+      if (fechaInicio && fechaFin) {
+        // Rango personalizado
+        fechaInicioAnalisis = new Date(fechaInicio);
+        fechaFinAnalisis = new Date(fechaFin);
+      } else {
+        // Rango predefinido
+        fechaFinAnalisis = new Date();
+        fechaInicioAnalisis = new Date();
+        fechaInicioAnalisis.setDate(fechaFinAnalisis.getDate() - rangoDias);
+      }
+      
+      console.log(`[DEBUG] Fechas calculadas:`, {
+        fechaInicioAnalisis: fechaInicioAnalisis.toISOString(),
+        fechaFinAnalisis: fechaFinAnalisis.toISOString(),
+        rangoDias,
+        modo: fechaInicio && fechaFin ? 'personalizado' : 'predefinido'
+      });
+      
+      // Query principal para productos sin movimientos
+      // Filtra productos con última actividad desde 2024 en adelante para evitar productos históricos
+      const queryProductosSinMovimiento = `
+        WITH productos_con_stock AS (
+          -- Productos que tienen stock actual
+          SELECT DISTINCT
+            p.id,
+            p.name as nombre,
+            p.description as descripcion,
+            p.cost as costo,
+            p.retail_price as precio_venta,
+            p.sku,
+            p.internal_code,
+            p.minimum_stock,
+            SUM(s.quantity) as stock_actual
+          FROM product p
+          JOIN stock s ON p.id = s."productId"
+          WHERE s."headquarterId" = ANY($1)
+            AND p.deleted_at IS NULL
+            AND s.quantity > 0
+          GROUP BY p.id, p.name, p.description, p.cost, p.retail_price, p.sku, p.internal_code, p.minimum_stock
+        ),
+        ultima_venta AS (
+          -- Última venta de cada producto
+          SELECT 
+            ps."productId",
+            MAX(s.created_at) as ultima_venta_fecha
+          FROM product_sell ps
+          JOIN sell s ON ps."sellId" = s.id
+          WHERE s."headquarterId" = ANY($1)
+            AND s.deleted_at IS NULL
+          GROUP BY ps."productId"
+        ),
+        ultimo_movimiento AS (
+          -- Último movimiento entre sedes de cada producto
+          SELECT 
+            m."productId",
+            MAX(m.created_at) as ultimo_movimiento_fecha
+          FROM movement m
+          WHERE (m."sourceId" = ANY($1) OR m."recieverId" = ANY($1))
+            AND m.deleted_at IS NULL
+          GROUP BY m."productId"
+        ),
+        ultima_compra AS (
+          -- Última compra de cada producto
+          SELECT 
+            pp."productId",
+            MAX(pur.created_at) as ultima_compra_fecha
+          FROM product_purchase pp
+          JOIN purchase pur ON pp."purchaseId" = pur.id
+          WHERE pur."headquarterId" = ANY($1)
+            AND pur.deleted_at IS NULL
+          GROUP BY pp."productId"
+        )
+        SELECT DISTINCT
+          pcs.id,
+          pcs.nombre,
+          pcs.descripcion,
+          pcs.costo,
+          pcs.precio_venta,
+          pcs.sku,
+          pcs.internal_code,
+          pcs.minimum_stock,
+          pcs.stock_actual,
+          uv.ultima_venta_fecha,
+          um.ultimo_movimiento_fecha,
+          uc.ultima_compra_fecha,
+          COALESCE(uv.ultima_venta_fecha, '1900-01-01'::timestamp) as ultima_actividad_venta,
+          COALESCE(um.ultimo_movimiento_fecha, '1900-01-01'::timestamp) as ultima_actividad_movimiento,
+          COALESCE(uc.ultima_compra_fecha, '1900-01-01'::timestamp) as ultima_actividad_compra,
+          GREATEST(
+            COALESCE(uv.ultima_venta_fecha, '1900-01-01'::timestamp),
+            COALESCE(um.ultimo_movimiento_fecha, '1900-01-01'::timestamp),
+            COALESCE(uc.ultima_compra_fecha, '1900-01-01'::timestamp)
+          ) as ultima_actividad_general
+        FROM productos_con_stock pcs
+        LEFT JOIN ultima_venta uv ON pcs.id = uv."productId"
+        LEFT JOIN ultimo_movimiento um ON pcs.id = um."productId"
+        LEFT JOIN ultima_compra uc ON pcs.id = uc."productId"
+        WHERE GREATEST(
+          COALESCE(uv.ultima_venta_fecha, '1900-01-01'::timestamp),
+          COALESCE(um.ultimo_movimiento_fecha, '1900-01-01'::timestamp),
+          COALESCE(uc.ultima_compra_fecha, '1900-01-01'::timestamp)
+        ) < $2
+        AND GREATEST(
+          COALESCE(uv.ultima_venta_fecha, '1900-01-01'::timestamp),
+          COALESCE(um.ultimo_movimiento_fecha, '1900-01-01'::timestamp),
+          COALESCE(uc.ultima_compra_fecha, '1900-01-01'::timestamp)
+        ) >= '2024-01-01'::timestamp
+        ORDER BY pcs.stock_actual DESC, pcs.nombre
+      `;
+
+      const resultados = await executeQuery(sede, queryProductosSinMovimiento, [
+        headquarterIds,
+        fechaInicioAnalisis.toISOString()
+      ]);
+
+      console.log(`[DEBUG] Productos sin movimiento para ${sede}:`, {
+        headquarterIds,
+        fechaInicioAnalisis: fechaInicioAnalisis.toISOString(),
+        totalResultados: resultados.length,
+        muestraResultados: resultados.slice(0, 2).map(r => ({
+          nombre: r.nombre,
+          stock_actual: r.stock_actual,
+          ultima_actividad: r.ultima_actividad_general
+        }))
+      });
+
+      // Procesar resultados y calcular métricas
+      const productosSinMovimiento = resultados.map(producto => {
+        const hoy = new Date();
+        const ultimaActividad = new Date(producto.ultima_actividad_general);
+        const ultimaVenta = producto.ultima_venta_fecha ? new Date(producto.ultima_venta_fecha) : null;
+        const ultimoMovimiento = producto.ultimo_movimiento_fecha ? new Date(producto.ultimo_movimiento_fecha) : null;
+        const ultimaCompra = producto.ultima_compra_fecha ? new Date(producto.ultima_compra_fecha) : null;
+        
+        // Calcular días sin actividad
+        const diasSinActividad = Math.floor((hoy - ultimaActividad) / (1000 * 60 * 60 * 24));
+        
+        // Calcular días sin ventas
+        const diasSinVentas = ultimaVenta ? Math.floor((hoy - ultimaVenta) / (1000 * 60 * 60 * 24)) : null;
+        
+        // Calcular días sin movimientos
+        const diasSinMovimientos = ultimoMovimiento ? Math.floor((hoy - ultimoMovimiento) / (1000 * 60 * 60 * 24)) : null;
+        
+        // Calcular días sin compras
+        const diasSinCompras = ultimaCompra ? Math.floor((hoy - ultimaCompra) / (1000 * 60 * 60 * 24)) : null;
+        
+        // Calcular valor del stock obsoleto
+        const valorStockObsoleto = producto.stock_actual * producto.costo;
+        
+        // Determinar tipo de inactividad
+        let tipoInactividad = [];
+        if (!ultimaVenta || diasSinVentas > rangoDias) tipoInactividad.push('Sin ventas');
+        if (!ultimoMovimiento || diasSinMovimientos > rangoDias) tipoInactividad.push('Sin movimientos');
+        if (!ultimaCompra || diasSinCompras > rangoDias) tipoInactividad.push('Sin compras');
+        
+        // Calcular margen de ganancia
+        const margenGanancia = producto.precio_venta > 0 ? 
+          ((producto.precio_venta - producto.costo) / producto.precio_venta) * 100 : 0;
+
+        return {
+          id: producto.id,
+          nombre: producto.nombre,
+          descripcion: producto.descripcion,
+          sku: producto.sku,
+          internal_code: producto.internal_code,
+          costo: producto.costo,
+          precio_venta: producto.precio_venta,
+          minimum_stock: producto.minimum_stock,
+          stock_actual: producto.stock_actual,
+          margen_ganancia: margenGanancia,
+          valor_stock_obsoleto: valorStockObsoleto,
+          ultima_venta_fecha: producto.ultima_venta_fecha?.toISOString(),
+          ultimo_movimiento_fecha: producto.ultimo_movimiento_fecha?.toISOString(),
+          ultima_compra_fecha: producto.ultima_compra_fecha?.toISOString(),
+          ultima_actividad_general: producto.ultima_actividad_general?.toISOString(),
+          dias_sin_actividad: diasSinActividad,
+          dias_sin_ventas: diasSinVentas,
+          dias_sin_movimientos: diasSinMovimientos,
+          dias_sin_compras: diasSinCompras,
+          tipo_inactividad: tipoInactividad,
+          sede: sede,
+          rango_analisis: rangoDias,
+          fecha_inicio_analisis: fechaInicioAnalisis.toISOString(),
+          fecha_fin_analisis: fechaFinAnalisis.toISOString()
+        };
+      });
+
+      return productosSinMovimiento;
+    } catch (error) {
+      console.error(`Error obteniendo productos sin movimiento en ${sede}:`, error);
+      throw error;
+    }
+  }
+
+  // Función para obtener productos más vendidos por cantidad o valor
+  async function getProductosMasVendidos(sede, rangoDias = 30, fechaInicio = null, fechaFin = null, tipoAnalisis = 'cantidad') {
+    try {
+      console.log(`[DEBUG] Productos más vendidos:`, { sede, rangoDias, fechaInicio, fechaFin, tipoAnalisis });
+      
+      // HeadquarterId correctos para cada base de datos
+      const headquarterIds = sede === 'ladorada' ? [6, 3, 2, 5] : [3, 1, 2];
+      
+      // Calcular fechas del rango
+      let fechaInicioAnalisis, fechaFinAnalisis;
+      
+      if (fechaInicio && fechaFin) {
+        // Rango personalizado
+        fechaInicioAnalisis = new Date(fechaInicio);
+        fechaFinAnalisis = new Date(fechaFin);
+      } else {
+        // Rango predefinido
+        fechaFinAnalisis = new Date();
+        fechaInicioAnalisis = new Date();
+        fechaInicioAnalisis.setDate(fechaFinAnalisis.getDate() - rangoDias);
+      }
+      
+      console.log(`[DEBUG] Fechas calculadas:`, {
+        fechaInicioAnalisis: fechaInicioAnalisis.toISOString(),
+        fechaFinAnalisis: fechaFinAnalisis.toISOString(),
+        rangoDias,
+        modo: fechaInicio && fechaFin ? 'personalizado' : 'predefinido'
+      });
+      
+      // Query principal para productos más vendidos
+      // Usando la estructura correcta de product_sell y optimizando para rendimiento
+      const queryMasVendidos = `
+        WITH ventas_en_rango AS (
+          -- Ventas realizadas en el rango de análisis
+          SELECT 
+            ps."productId",
+            p.name as nombre,
+            p.description as descripcion,
+            p.cost as costo,
+            p.retail_price as precio_venta,
+            p.sku,
+            p.internal_code,
+            p.minimum_stock,
+            SUM(ps.quantity) as cantidad_vendida,
+            SUM(ps.total_price) as valor_vendido,
+            COUNT(DISTINCT s.id) as numero_ventas,
+            MIN(s.created_at) as primera_venta_en_rango,
+            MAX(s.created_at) as ultima_venta_en_rango,
+            -- Calcular precio promedio usando total_price / quantity para mayor precisión
+            CASE 
+              WHEN SUM(ps.quantity) > 0 THEN SUM(ps.total_price) / SUM(ps.quantity)
+              ELSE 0 
+            END as precio_promedio_venta
+          FROM product_sell ps
+          JOIN sell s ON ps."sellId" = s.id
+          JOIN product p ON ps."productId" = p.id
+          WHERE s."headquarterId" = ANY($1)
+            AND ps.deleted_at IS NULL
+            AND s.deleted_at IS NULL
+            AND p.deleted_at IS NULL
+            AND s.created_at >= $2
+            AND s.created_at <= $3
+          GROUP BY ps."productId", p.name, p.description, p.cost, p.retail_price, p.sku, p.internal_code, p.minimum_stock
+        ),
+        stock_actual AS (
+          -- Stock actual por producto
+          SELECT 
+            "productId",
+            SUM(quantity) as stock_actual
+          FROM stock 
+          WHERE "headquarterId" = ANY($1)
+          GROUP BY "productId"
+        ),
+        ultima_compra AS (
+          -- Última compra de cada producto
+          SELECT 
+            pp."productId",
+            MAX(pur.created_at) as ultima_compra_fecha,
+            AVG(pp.unit_price) as precio_promedio_compra
+          FROM product_purchase pp
+          JOIN purchase pur ON pp."purchaseId" = pur.id
+          WHERE pur."headquarterId" = ANY($1)
+            AND pur.deleted_at IS NULL
+          GROUP BY pp."productId"
+        )
+        SELECT DISTINCT
+          vr."productId" as id,
+          vr.nombre,
+          vr.descripcion,
+          vr.costo,
+          vr.precio_venta,
+          vr.sku,
+          vr.internal_code,
+          vr.minimum_stock,
+          vr.cantidad_vendida,
+          vr.valor_vendido,
+          vr.numero_ventas,
+          vr.primera_venta_en_rango,
+          vr.ultima_venta_en_rango,
+          vr.precio_promedio_venta,
+          COALESCE(sa.stock_actual, 0) as stock_actual,
+          uc.ultima_compra_fecha,
+          uc.precio_promedio_compra
+        FROM ventas_en_rango vr
+        LEFT JOIN stock_actual sa ON vr."productId" = sa."productId"
+        LEFT JOIN ultima_compra uc ON vr."productId" = uc."productId"
+        WHERE vr.cantidad_vendida > 0
+        ORDER BY ${tipoAnalisis === 'valor' ? 'vr.valor_vendido' : 'vr.cantidad_vendida'} DESC
+        LIMIT 100
+      `;
+
+      const resultados = await executeQuery(sede, queryMasVendidos, [
+        headquarterIds,
+        fechaInicioAnalisis.toISOString(),
+        fechaFinAnalisis.toISOString()
+      ]);
+
+      console.log(`[DEBUG] Productos más vendidos para ${sede}:`, {
+        headquarterIds,
+        fechaInicioAnalisis: fechaInicioAnalisis.toISOString(),
+        fechaFinAnalisis: fechaFinAnalisis.toISOString(),
+        tipoAnalisis,
+        totalResultados: resultados.length,
+        muestraResultados: resultados.slice(0, 2).map(r => ({
+          nombre: r.nombre,
+          cantidad_vendida: r.cantidad_vendida,
+          valor_vendido: r.valor_vendido
+        }))
+      });
+
+      // Procesar resultados y calcular métricas
+      const productosMasVendidos = resultados.map(producto => {
+        const hoy = new Date();
+        const primeraVenta = new Date(producto.primera_venta_en_rango);
+        const ultimaVenta = new Date(producto.ultima_venta_en_rango);
+        const ultimaCompra = producto.ultima_compra_fecha ? new Date(producto.ultima_compra_fecha) : null;
+        
+        // Calcular días del rango de análisis
+        const diasRango = Math.max(1, Math.floor((ultimaVenta - primeraVenta) / (1000 * 60 * 60 * 24)) + 1);
+        
+        // Calcular frecuencia de venta diaria
+        const frecuenciaVentaDiaria = diasRango > 0 ? producto.cantidad_vendida / diasRango : 0;
+        
+        // Calcular días de inventario restante basado en la frecuencia de venta
+        const diasInventarioRestante = frecuenciaVentaDiaria > 0 ? 
+          Math.floor(producto.stock_actual / frecuenciaVentaDiaria) : 999;
+        
+        // Calcular margen de ganancia
+        const margenGanancia = producto.precio_venta > 0 ? 
+          ((producto.precio_venta - producto.costo) / producto.precio_venta) * 100 : 0;
+        
+        // Calcular margen real (precio promedio de venta vs costo)
+        const margenReal = producto.precio_promedio_venta > 0 ? 
+          ((producto.precio_promedio_venta - producto.costo) / producto.precio_promedio_venta) * 100 : 0;
+
+        return {
+          id: producto.id,
+          nombre: producto.nombre,
+          descripcion: producto.descripcion,
+          sku: producto.sku,
+          internal_code: producto.internal_code,
+          costo: producto.costo,
+          precio_venta: producto.precio_venta,
+          minimum_stock: producto.minimum_stock,
+          stock_actual: producto.stock_actual,
+          cantidad_vendida: producto.cantidad_vendida,
+          valor_vendido: producto.valor_vendido,
+          numero_ventas: producto.numero_ventas,
+          margen_ganancia: margenGanancia,
+          margen_real: margenReal,
+          precio_promedio_venta: producto.precio_promedio_venta,
+          precio_promedio_compra: producto.precio_promedio_compra,
+          primera_venta_en_rango: producto.primera_venta_en_rango?.toISOString(),
+          ultima_venta_en_rango: producto.ultima_venta_en_rango?.toISOString(),
+          ultima_compra_fecha: producto.ultima_compra_fecha?.toISOString(),
+          dias_rango_analisis: diasRango,
+          frecuencia_venta_diaria: frecuenciaVentaDiaria,
+          dias_inventario_restante: diasInventarioRestante,
+          sede: sede,
+          rango_analisis: rangoDias,
+          tipo_analisis: tipoAnalisis,
+          fecha_inicio_analisis: fechaInicioAnalisis.toISOString(),
+          fecha_fin_analisis: fechaFinAnalisis.toISOString()
+        };
+      });
+
+      return productosMasVendidos;
+    } catch (error) {
+      console.error(`Error obteniendo productos más vendidos en ${sede}:`, error);
+      throw error;
+    }
+  }
+
  export {
    createConnection,
    executeQuery,
    getProductosAmbasSedes,
    getProyeccionCompras,
+   getProductosSinMovimiento,
+   getProductosMasVendidos,
    getProveedores,
    getFacturasProveedor,
    getTodasLasFacturas,
    getAnalisisRecompraProveedor,
    getAnalisisTodosProveedores,
-
+   debugProviderTable,
+   verificarPermisosDB,
    testVentas,
    testCompras,
    dbConfigs

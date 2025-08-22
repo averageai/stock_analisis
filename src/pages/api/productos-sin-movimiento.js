@@ -1,4 +1,4 @@
-import { getProyeccionCompras } from '../../lib/database';
+import { getProductosSinMovimiento } from '../../lib/database';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { sede, rango, modo, fechaInicio, fechaFin, ignorarStock } = req.query;
+    const { sede, rango, modo, fechaInicio, fechaFin } = req.query;
 
     // Validar parámetros requeridos
     if (!sede || !['ladorada', 'manizales'].includes(sede)) {
@@ -33,26 +33,25 @@ export default async function handler(req, res) {
     } else {
       // Rango predefinido
       rangoDias = parseInt(rango) || 30;
-      if (![15, 30, 60].includes(rangoDias)) {
+      if (![15, 30, 60, 90].includes(rangoDias)) {
         return res.status(400).json({ 
           success: false, 
-          error: 'Rango debe ser 15, 30 o 60 días' 
+          error: 'Rango debe ser 15, 30, 60 o 90 días' 
         });
       }
     }
 
-    // Obtener proyección de compras
-    const proyeccion = await getProyeccionCompras(
+    // Obtener productos sin movimiento
+    const productosSinMovimiento = await getProductosSinMovimiento(
       sede, 
       rangoDias, 
       fechaInicioAnalisis, 
-      fechaFinAnalisis,
-      ignorarStock === 'true'
+      fechaFinAnalisis
     );
 
     return res.status(200).json({
       success: true,
-      proyeccion,
+      productosSinMovimiento,
       filtros: {
         sede,
         rangoDias,
@@ -63,7 +62,7 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error('Error en API proyección-compras:', error);
+    console.error('Error en API productos-sin-movimiento:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Error interno del servidor'

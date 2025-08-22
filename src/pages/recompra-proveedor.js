@@ -338,22 +338,67 @@ export default function RecompraProveedor() {
 
   const chartOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'top',
+        labels: {
+          color: '#ffffff',
+          font: {
+            size: 12,
+            weight: '500'
+          },
+          padding: 20
+        }
       },
       title: {
         display: true,
         text: 'Top 10 Productos Más Vendidos del Proveedor',
+        color: '#ffffff',
+        font: {
+          size: 16,
+          weight: '600'
+        },
+        padding: {
+          top: 10,
+          bottom: 20
+        }
       },
     },
     scales: {
+      x: {
+        ticks: {
+          color: '#b8c2cc',
+          font: {
+            size: 11
+          }
+        },
+        grid: {
+          color: '#495057',
+          drawBorder: false
+        }
+      },
       y: {
         beginAtZero: true,
         title: {
           display: true,
           text: 'Cantidad Vendida',
+          color: '#ffffff',
+          font: {
+            size: 12,
+            weight: '500'
+          }
         },
+        ticks: {
+          color: '#b8c2cc',
+          font: {
+            size: 11
+          }
+        },
+        grid: {
+          color: '#495057',
+          drawBorder: false
+        }
       },
     },
   };
@@ -565,25 +610,25 @@ export default function RecompraProveedor() {
 
                  {/* Facturas del Proveedor */}
          {facturasFiltradas.length > 0 && (
-          <div className="bg-white p-6 rounded-lg shadow-md">
+          <div className="card">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Facturas del Proveedor</h3>
-                             <div className="flex items-center space-x-2">
-                 <label className="flex items-center">
+                             <div className="select-all-container">
+                 <label>
                    <input
                      type="checkbox"
                      checked={facturasSeleccionadas.length === facturasFiltradas.length}
                      onChange={handleSelectAllFacturas}
-                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                     className="checkbox-corporate"
                    />
-                   <span className="ml-2 text-sm text-gray-700">Seleccionar Todas</span>
+                   <span>Seleccionar Todas</span>
                  </label>
                </div>
             </div>
             
-                         <div className="text-sm text-gray-600 mb-4">
+                         <div className="label-corporate-secondary mb-4">
                Selecciona las facturas específicas para analizar, o déjalo vacío para analizar todas las facturas del proveedor.
-               <span className="text-blue-600 font-medium">
+               <span className="factura-counter">
                  {' '}Mostrando {facturasFiltradas.length} de {facturas.length} facturas
                  {filtroDias !== 'todos' && ` (filtradas por fecha)`}
                  {busquedaFacturas.trim() && (() => {
@@ -595,7 +640,7 @@ export default function RecompraProveedor() {
 
              {/* Buscador de facturas */}
              <div className="mb-4">
-               <label className="block text-sm font-medium text-gray-700 mb-2">
+               <label className="label-corporate block mb-2">
                  Buscar facturas por número:
                </label>
                <input
@@ -603,9 +648,9 @@ export default function RecompraProveedor() {
                  value={busquedaFacturas}
                  onChange={(e) => setBusquedaFacturas(e.target.value)}
                  placeholder="Ej: 123, 456, 789 (separar por comas para múltiples)"
-                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                 className="input-search-corporate w-full"
                />
-               <p className="text-xs text-gray-500 mt-1">
+               <p className="help-text">
                  Ingresa números de factura separados por comas para buscar múltiples facturas
                </p>
                {busquedaFacturas.trim() && (() => {
@@ -615,13 +660,13 @@ export default function RecompraProveedor() {
                  
                  if (!hayNumerosValidos && busquedaFacturas.trim()) {
                    return (
-                     <p className="text-xs text-orange-500 mt-1">
+                     <p className="help-text-warning">
                        Ingresa solo números válidos separados por comas (ej: 123, 456)
                      </p>
                    );
                  } else if (noHayCoincidencias) {
                    return (
-                     <p className="text-xs text-red-500 mt-1">
+                     <p className="help-text-error">
                        No se encontraron facturas con los números: {numerosBusqueda.join(', ')}
                      </p>
                    );
@@ -630,25 +675,25 @@ export default function RecompraProveedor() {
                })()}
              </div>
 
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+             <div className="facturas-grid">
                {facturasFiltradas.map(factura => (
-                <div key={factura.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                <div key={factura.id} className="factura-card">
                   <label className="flex items-start space-x-3 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={facturasSeleccionadas.includes(factura.id)}
                       onChange={() => handleFacturaToggle(factura.id)}
-                      className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="checkbox-corporate mt-1"
                     />
                     <div className="flex-1">
                       <div className="font-medium">Factura #{factura.invoice_number}</div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm">
                         Fecha: {formatDate(factura.created_at)}
                       </div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm">
                         Valor: {formatPrice(factura.total_value)}
                       </div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm">
                         Productos: {factura.total_productos}
                       </div>
                     </div>
@@ -674,17 +719,17 @@ export default function RecompraProveedor() {
 
         {/* Gráfico */}
         {top10Productos.length > 0 && (
-          <div className="card">
-            <div className="card-header">
-              <h3 className="text-lg font-semibold text-white flex items-center">
-                <svg className="w-5 h-5 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+          <div className="chart-container">
+            <div className="chart-header">
+              <h3 className="chart-title">
+                <svg className="chart-icon" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
                   <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
                 </svg>
                 Gráfico de Productos Más Vendidos
               </h3>
             </div>
-            <div className="h-96">
+            <div className="chart-wrapper chart-dark-theme">
               <Bar data={chartData} options={chartOptions} />
             </div>
           </div>
@@ -700,25 +745,25 @@ export default function RecompraProveedor() {
                  </svg>
                  Análisis de Recompra
                </h3>
-                                <div className="flex items-center space-x-4">
-                   <div className="flex items-center space-x-2">
-                     <label className="text-sm font-medium text-gray-300">Ordenar por:</label>
+                                <div className="chart-controls">
+                   <div className="chart-control-group">
+                     <label className="chart-control-label">Ordenar por:</label>
                      <select
                        value={ordenarPor}
                        onChange={(e) => setOrdenarPor(e.target.value)}
-                       className="select-corporate px-2 py-1 text-sm"
+                       className="chart-select"
                      >
                      <option value="vendido">Vendido</option>
                      <option value="frecuencia">Frecuencia</option>
                      <option value="nombre">Nombre</option>
                    </select>
                  </div>
-                                    <div className="flex items-center space-x-2">
-                     <label className="text-sm font-medium text-gray-300">Orden:</label>
+                                    <div className="chart-control-group">
+                     <label className="chart-control-label">Orden:</label>
                      <select
                        value={ordenDireccion}
                        onChange={(e) => setOrdenDireccion(e.target.value)}
-                       className="select-corporate px-2 py-1 text-sm"
+                       className="chart-select"
                      >
                      <option value="desc">Descendente</option>
                      <option value="asc">Ascendente</option>
@@ -727,10 +772,10 @@ export default function RecompraProveedor() {
                  <button
                    onClick={exportarExcel}
                    disabled={analisis.length === 0}
-                   className="btn-success text-sm font-medium flex items-center"
+                   className="chart-export-btn"
                    title="Exportar análisis a Excel con SKU, código interno, nombre, facturas, vendidos, sugerido de compra y costo"
                  >
-                   <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                   <svg fill="currentColor" viewBox="0 0 20 20">
                      <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
                    </svg>
                    Exportar Excel
@@ -861,60 +906,68 @@ export default function RecompraProveedor() {
 
                  {/* Resumen */}
          {analisis.length > 0 && (
-           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                         <div className="bg-white p-4 rounded-lg shadow-md text-center">
-                              <div className="text-2xl font-bold text-blue-600">
+           <div className="metrics-grid">
+                         <div className="metric-card">
+                              <div className="metric-number metric-total">
                  {analisis.length}
                </div>
-               <div className="text-sm text-gray-600">Total Productos</div>
+               <div className="metric-label">Total Productos</div>
              </div>
-             <div className="bg-white p-4 rounded-lg shadow-md text-center">
-               <div className="text-2xl font-bold text-red-600">
+             <div className="metric-card">
+               <div className="metric-number metric-critical">
                  {analisis.filter(item => item.dias_inventario_restante !== null && item.dias_inventario_restante <= 7).length}
                </div>
-               <div className="text-sm text-gray-600">Críticos (≤7 días)</div>
+               <div className="metric-label">Críticos (≤7 días)</div>
              </div>
-             <div className="bg-white p-4 rounded-lg shadow-md text-center">
-               <div className="text-2xl font-bold text-orange-600">
+             <div className="metric-card">
+               <div className="metric-number metric-urgent">
                  {analisis.filter(item => item.dias_inventario_restante !== null && item.dias_inventario_restante > 7 && item.dias_inventario_restante <= 14).length}
                </div>
-               <div className="text-sm text-gray-600">Urgentes (8-14 días)</div>
+               <div className="metric-label">Urgentes (8-14 días)</div>
              </div>
-             <div className="bg-white p-4 rounded-lg shadow-md text-center">
-               <div className="text-2xl font-bold text-green-600">
+             <div className="metric-card">
+               <div className="metric-number metric-ok">
                  {analisis.filter(item => item.dias_inventario_restante !== null && item.dias_inventario_restante > 30).length}
                </div>
-               <div className="text-sm text-gray-600">OK (&gt;30 días)</div>
+               <div className="metric-label">OK (&gt;30 días)</div>
              </div>
-             <div className="bg-white p-4 rounded-lg shadow-md text-center">
-               <div className="text-2xl font-bold text-gray-600">
+             <div className="metric-card">
+               <div className="metric-number metric-historical">
                  {analisis.filter(item => item.dias_inventario_restante === null).length}
                </div>
-               <div className="text-sm text-gray-600">Histórico</div>
+               <div className="metric-label">Histórico</div>
              </div>
           </div>
         )}
 
         {/* Explicación de la Lógica */}
-        <div className="bg-blue-50 p-6 rounded-lg shadow-md border border-blue-200">
-          <h3 className="text-lg font-semibold mb-4 text-blue-800">📊 Lógica de Análisis de Recompra por Proveedor</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-blue-700">
+        <div className="card">
+          <div className="card-header">
+            <h3 className="text-lg font-semibold text-white flex items-center">
+              <svg className="w-5 h-5 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
+                <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
+              </svg>
+              Lógica de Análisis de Recompra por Proveedor
+            </h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
             <div>
-              <h4 className="font-semibold mb-2">🎯 Objetivo:</h4>
-              <p className="mb-2">Analizar productos comprados a un proveedor específico y proyectar recompra basada en las ventas realizadas desde la primera compra.</p>
+              <h4 className="font-semibold mb-2 text-blue-400">🎯 Objetivo:</h4>
+              <p className="mb-2 text-gray-300">Analizar productos comprados a un proveedor específico y proyectar recompra basada en las ventas realizadas desde la primera compra.</p>
               
-              <h4 className="font-semibold mb-2">📈 Cálculo de Frecuencia:</h4>
-              <p className="mb-2">Frecuencia diaria = Total vendido desde primera compra ÷ Días transcurridos desde primera compra</p>
+              <h4 className="font-semibold mb-2 text-blue-400">📈 Cálculo de Frecuencia:</h4>
+              <p className="mb-2 text-gray-300">Frecuencia diaria = Total vendido desde primera compra ÷ Días transcurridos desde primera compra</p>
               
-              <h4 className="font-semibold mb-2">🛒 Sugerencia de Compra:</h4>
-              <p className="mb-2">Proyección 30 días + 20% margen de seguridad - Stock actual</p>
+              <h4 className="font-semibold mb-2 text-blue-400">🛒 Sugerencia de Compra:</h4>
+              <p className="mb-2 text-gray-300">Proyección 30 días + 20% margen de seguridad - Stock actual</p>
               
-              <h4 className="font-semibold mb-2">📊 Modo Ignorar Stock (La Dorada):</h4>
-              <p>Cuando está habilitado, el análisis se basa únicamente en cantidades compradas y vendidas, sin considerar inventario actual.</p>
+              <h4 className="font-semibold mb-2 text-blue-400">📊 Modo Ignorar Stock (La Dorada):</h4>
+              <p className="text-gray-300">Cuando está habilitado, el análisis se basa únicamente en cantidades compradas y vendidas, sin considerar inventario actual.</p>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">🔍 Filtros Disponibles:</h4>
-              <ul className="space-y-1">
+              <h4 className="font-semibold mb-2 text-blue-400">🔍 Filtros Disponibles:</h4>
+              <ul className="space-y-1 text-gray-300">
                 <li>• <strong>Proveedor específico:</strong> Selecciona el proveedor a analizar</li>
                 <li>• <strong>Facturas específicas:</strong> Analiza solo ciertas facturas del proveedor</li>
                 <li>• <strong>Todas las facturas:</strong> Análisis completo del proveedor</li>
@@ -922,8 +975,8 @@ export default function RecompraProveedor() {
                  <li>• <strong>Filtro por días:</strong> Analiza facturas de los últimos 15, 30, 60 o 90 días</li>
               </ul>
               
-              <h4 className="font-semibold mb-2 mt-4">💰 Métricas Incluidas:</h4>
-              <ul className="space-y-1">
+              <h4 className="font-semibold mb-2 mt-4 text-blue-400">💰 Métricas Incluidas:</h4>
+              <ul className="space-y-1 text-gray-300">
                 <li>• Margen de ganancia al detal y mayorista</li>
                 <li>• Historial completo de compras y ventas</li>
                 <li>• Proyección de demanda y sugerencias</li>

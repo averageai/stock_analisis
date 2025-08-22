@@ -1,4 +1,4 @@
-import { getProyeccionCompras } from '../../lib/database';
+import { getProductosMasVendidos } from '../../lib/database';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -6,13 +6,21 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { sede, rango, modo, fechaInicio, fechaFin, ignorarStock } = req.query;
+    const { sede, rango, modo, fechaInicio, fechaFin, tipoAnalisis } = req.query;
 
     // Validar parámetros requeridos
     if (!sede || !['ladorada', 'manizales'].includes(sede)) {
       return res.status(400).json({ 
         success: false, 
         error: 'Sede requerida: ladorada o manizales' 
+      });
+    }
+
+    // Validar tipo de análisis
+    if (!tipoAnalisis || !['cantidad', 'valor'].includes(tipoAnalisis)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Tipo de análisis requerido: cantidad o valor' 
       });
     }
 
@@ -33,37 +41,38 @@ export default async function handler(req, res) {
     } else {
       // Rango predefinido
       rangoDias = parseInt(rango) || 30;
-      if (![15, 30, 60].includes(rangoDias)) {
+      if (![15, 30, 60, 90].includes(rangoDias)) {
         return res.status(400).json({ 
           success: false, 
-          error: 'Rango debe ser 15, 30 o 60 días' 
+          error: 'Rango debe ser 15, 30, 60 o 90 días' 
         });
       }
     }
 
-    // Obtener proyección de compras
-    const proyeccion = await getProyeccionCompras(
+    // Obtener productos más vendidos
+    const productosMasVendidos = await getProductosMasVendidos(
       sede, 
       rangoDias, 
       fechaInicioAnalisis, 
       fechaFinAnalisis,
-      ignorarStock === 'true'
+      tipoAnalisis
     );
 
     return res.status(200).json({
       success: true,
-      proyeccion,
+      productosMasVendidos,
       filtros: {
         sede,
         rangoDias,
         modo,
         fechaInicio: fechaInicioAnalisis,
-        fechaFin: fechaFinAnalisis
+        fechaFin: fechaFinAnalisis,
+        tipoAnalisis
       }
     });
 
   } catch (error) {
-    console.error('Error en API proyección-compras:', error);
+    console.error('Error en API mas-vendidos:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Error interno del servidor'

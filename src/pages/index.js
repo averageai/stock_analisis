@@ -76,7 +76,7 @@ export default function Dashboard({ productosIniciales, error: serverError }) {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-gray-300">Base de datos:</span>
-                <span className="text-white font-mono text-sm">cristaleriaProd_complete</span>
+                <span className="text-white font-mono text-sm">cristaleriaprod_complete</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-300">Servidor:</span>

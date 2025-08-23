@@ -254,10 +254,10 @@ export default function Layout({ children, title = 'Sistema de Análisis de Inve
                 <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
                 <span className="text-sm text-gray-400 font-medium">Multi-sede</span>
               </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
-                <span className="text-sm text-gray-400 font-medium">v1.0 Stable</span>
-              </div>
+                              <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                  <span className="text-sm text-gray-400 font-medium">v1.1 Stable</span>
+                </div>
             </div>
           </div>
         </div>

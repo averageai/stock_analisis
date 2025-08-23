@@ -73,7 +73,7 @@ export default function Dashboard() {
             <div className="flex flex-wrap justify-center gap-4">
               <div className="flex items-center space-x-2 bg-green-900/20 px-4 py-2 rounded-lg border border-green-700/30">
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-green-300 font-medium">v1.0 Stable</span>
+                <span className="text-green-300 font-medium">v1.1 Stable</span>
               </div>
               <div className="flex items-center space-x-2 bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-700/30">
                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>

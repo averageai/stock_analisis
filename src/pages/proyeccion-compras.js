@@ -300,17 +300,17 @@ export default function ProyeccionCompras() {
 
   return (
     <Layout title="Proyección de Compras - Sistema de Análisis de Inventario">
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Header */}
         <div className="card">
           <div className="card-header">
-            <h1 className="text-3xl font-bold text-white mb-2 flex items-center">
-              <svg className="w-8 h-8 mr-3 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+            <h1 className="text-2xl font-bold text-white mb-1 flex items-center">
+              <svg className="w-6 h-6 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Proyección de Compras
             </h1>
-            <p className="text-gray-300">
+            <p className="text-gray-300 text-sm">
               Análisis de productos con ventas desde la última compra y sugerencias de reposición
             </p>
           </div>
@@ -319,19 +319,19 @@ export default function ProyeccionCompras() {
                  {/* Filtros */}
          <div className="card">
            <div className="card-header">
-             <h3 className="text-lg font-semibold text-white flex items-center">
-               <svg className="w-5 h-5 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+             <h3 className="text-base font-semibold text-white flex items-center">
+               <svg className="w-4 h-4 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                  <path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" />
                </svg>
                Filtros de Análisis
              </h3>
            </div>
                                  {/* Configuración Principal */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             {/* Sede */}
-            <div className="bg-gray-800/30 p-4 rounded-lg border border-gray-700">
-              <label className="label-corporate block mb-3 flex items-center">
-                <svg className="w-4 h-4 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+            <div className="bg-gray-800/30 p-3 rounded-lg border border-gray-700">
+              <label className="label-corporate block mb-2 flex items-center">
+                <svg className="w-3 h-3 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                 </svg>
                 Sede
@@ -347,9 +347,9 @@ export default function ProyeccionCompras() {
             </div>
 
             {/* Modo de Rango */}
-            <div className="bg-gray-800/30 p-4 rounded-lg border border-gray-700">
-              <label className="label-corporate block mb-3 flex items-center">
-                <svg className="w-4 h-4 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+            <div className="bg-gray-800/30 p-3 rounded-lg border border-gray-700">
+              <label className="label-corporate block mb-2 flex items-center">
+                <svg className="w-3 h-3 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                 </svg>
                 Tipo de Rango
@@ -366,9 +366,9 @@ export default function ProyeccionCompras() {
 
             {/* Rango Predefinido */}
             {modoRango === 'predefinido' && (
-              <div className="bg-gray-800/30 p-4 rounded-lg border border-gray-700">
-                <label className="label-corporate block mb-3 flex items-center">
-                  <svg className="w-4 h-4 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+              <div className="bg-gray-800/30 p-3 rounded-lg border border-gray-700">
+                <label className="label-corporate block mb-2 flex items-center">
+                  <svg className="w-3 h-3 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                   </svg>
                   Rango de Análisis
@@ -388,9 +388,9 @@ export default function ProyeccionCompras() {
             {/* Fechas Personalizadas */}
             {modoRango === 'personalizado' && (
               <>
-                <div className="bg-gray-800/30 p-4 rounded-lg border border-gray-700">
-                  <label className="label-corporate block mb-3 flex items-center">
-                    <svg className="w-4 h-4 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                <div className="bg-gray-800/30 p-3 rounded-lg border border-gray-700">
+                  <label className="label-corporate block mb-2 flex items-center">
+                    <svg className="w-3 h-3 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                     </svg>
                     Fecha Inicio
@@ -402,9 +402,9 @@ export default function ProyeccionCompras() {
                     className="input-corporate w-full"
                   />
                 </div>
-                <div className="bg-gray-800/30 p-4 rounded-lg border border-gray-700">
-                  <label className="label-corporate block mb-3 flex items-center">
-                    <svg className="w-4 h-4 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                <div className="bg-gray-800/30 p-3 rounded-lg border border-gray-700">
+                  <label className="label-corporate block mb-2 flex items-center">
+                    <svg className="w-3 h-3 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                     </svg>
                     Fecha Fin
@@ -421,75 +421,75 @@ export default function ProyeccionCompras() {
           </div>
 
           {/* Filtros y Ordenamiento */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
             {/* Estados */}
-            <div className="bg-gray-800/30 p-4 rounded-lg border border-gray-700">
-              <label className="label-corporate block mb-3 flex items-center">
-                <svg className="w-4 h-4 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+            <div className="bg-gray-800/30 p-3 rounded-lg border border-gray-700">
+              <label className="label-corporate block mb-2 flex items-center">
+                <svg className="w-3 h-3 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" />
                 </svg>
                 Estados de Urgencia
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <label className="flex items-center p-2 rounded hover:bg-gray-700/50 transition-colors">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+                <label className="flex items-center p-1.5 rounded hover:bg-gray-700/50 transition-colors">
                   <input
                     type="checkbox"
                     checked={isEstadoSelected('todos')}
                     onChange={() => handleEstadoChange('todos')}
                     className="checkbox-corporate"
                   />
-                  <span className="ml-2 text-sm font-medium text-gray-300">Todos los Estados</span>
+                  <span className="ml-2 text-xs font-medium text-gray-300">Todos los Estados</span>
                 </label>
-                <label className="flex items-center p-2 rounded hover:bg-gray-700/50 transition-colors">
+                <label className="flex items-center p-1.5 rounded hover:bg-gray-700/50 transition-colors">
                   <input
                     type="checkbox"
                     checked={isEstadoSelected('critico')}
                     onChange={() => handleEstadoChange('critico')}
                     className="checkbox-corporate"
                   />
-                  <span className="ml-2 text-sm font-medium text-red-400">Crítico (≤7 días)</span>
+                  <span className="ml-2 text-xs font-medium text-red-400">Crítico (≤7 días)</span>
                 </label>
-                <label className="flex items-center p-2 rounded hover:bg-gray-700/50 transition-colors">
+                <label className="flex items-center p-1.5 rounded hover:bg-gray-700/50 transition-colors">
                   <input
                     type="checkbox"
                     checked={isEstadoSelected('urgente')}
                     onChange={() => handleEstadoChange('urgente')}
                     className="checkbox-corporate"
                   />
-                  <span className="ml-2 text-sm font-medium text-orange-400">Urgente (8-14 días)</span>
+                  <span className="ml-2 text-xs font-medium text-orange-400">Urgente (8-14 días)</span>
                 </label>
-                <label className="flex items-center p-2 rounded hover:bg-gray-700/50 transition-colors">
+                <label className="flex items-center p-1.5 rounded hover:bg-gray-700/50 transition-colors">
                   <input
                     type="checkbox"
                     checked={isEstadoSelected('atencion')}
                     onChange={() => handleEstadoChange('atencion')}
                     className="checkbox-corporate"
                   />
-                  <span className="ml-2 text-sm font-medium text-yellow-400">Atención (15-30 días)</span>
+                  <span className="ml-2 text-xs font-medium text-yellow-400">Atención (15-30 días)</span>
                 </label>
-                <label className="flex items-center p-2 rounded hover:bg-gray-700/50 transition-colors">
+                <label className="flex items-center p-1.5 rounded hover:bg-gray-700/50 transition-colors">
                   <input
                     type="checkbox"
                     checked={isEstadoSelected('ok')}
                     onChange={() => handleEstadoChange('ok')}
                     className="checkbox-corporate"
                   />
-                  <span className="ml-2 text-sm font-medium text-green-400">OK (&gt;30 días)</span>
+                  <span className="ml-2 text-xs font-medium text-green-400">OK (&gt;30 días)</span>
                 </label>
               </div>
             </div>
 
             {/* Ordenamiento */}
-            <div className="bg-gray-800/30 p-4 rounded-lg border border-gray-700">
-              <label className="label-corporate block mb-3 flex items-center">
-                <svg className="w-4 h-4 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+            <div className="bg-gray-800/30 p-3 rounded-lg border border-gray-700">
+              <label className="label-corporate block mb-2 flex items-center">
+                <svg className="w-3 h-3 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
                 </svg>
                 Ordenamiento
               </label>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <div>
-                  <label className="text-sm font-medium text-gray-300 mb-2 block">Ordenar por:</label>
+                  <label className="text-xs font-medium text-gray-300 mb-1 block">Ordenar por:</label>
                   <select
                     value={ordenarPor}
                     onChange={(e) => setOrdenarPor(e.target.value)}
@@ -501,7 +501,7 @@ export default function ProyeccionCompras() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-300 mb-2 block">Dirección:</label>
+                  <label className="text-xs font-medium text-gray-300 mb-1 block">Dirección:</label>
                   <select
                     value={ordenDireccion}
                     onChange={(e) => setOrdenDireccion(e.target.value)}
@@ -517,14 +517,14 @@ export default function ProyeccionCompras() {
 
           {/* Opciones de Análisis */}
           {filtroSede === 'ladorada' && (
-            <div className="bg-blue-900/20 p-4 rounded-lg border border-blue-700/30 mb-6">
-              <h4 className="font-semibold text-blue-300 mb-3 flex items-center">
-                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <div className="bg-blue-900/20 p-3 rounded-lg border border-blue-700/30 mb-4">
+              <h4 className="font-semibold text-blue-300 mb-2 flex items-center">
+                <svg className="w-3 h-3 mr-2" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
                 </svg>
                 Opciones de Análisis Avanzado
               </h4>
-              <div className="flex items-center p-3 bg-blue-900/30 rounded-lg border border-blue-600/30">
+              <div className="flex items-center p-2 bg-blue-900/30 rounded-lg border border-blue-600/30">
                 <label className="flex items-center cursor-pointer">
                   <input
                     type="checkbox"
@@ -532,12 +532,12 @@ export default function ProyeccionCompras() {
                     onChange={(e) => setIgnorarStock(e.target.checked)}
                     className="rounded border-blue-600 bg-gray-700 text-blue-600 focus:ring-blue-500 w-4 h-4"
                   />
-                  <span className="ml-3 text-sm text-blue-200 font-medium">
+                  <span className="ml-2 text-xs text-blue-200 font-medium">
                     Ignorar stock actual (analizar solo cantidad comprada)
                   </span>
                 </label>
               </div>
-              <p className="text-xs text-blue-300 mt-3 leading-relaxed">
+              <p className="text-xs text-blue-300 mt-2 leading-relaxed">
                 <strong>Modo histórico:</strong> Cuando está habilitado, el análisis se basa únicamente en las cantidades compradas y vendidas, 
                 sin considerar el inventario actual. Útil para análisis histórico de comportamiento de ventas.
               </p>
@@ -545,11 +545,11 @@ export default function ProyeccionCompras() {
           )}
 
            {/* Botón de Actualizar */}
-           <div className="flex justify-center mt-6">
+           <div className="flex justify-center mt-4">
              <button
                onClick={recargarDatos}
                disabled={loading}
-               className="btn-primary px-8 py-3 text-lg font-semibold flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200"
+               className="btn-primary px-6 py-2 text-base font-semibold flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200"
              >
                {loading ? (
                  <>
@@ -584,8 +584,8 @@ export default function ProyeccionCompras() {
         {/* Gráfico */}
         <div className="chart-container">
           <div className="chart-header">
-            <h3 className="chart-title">
-              <svg className="chart-icon" fill="currentColor" viewBox="0 0 20 20">
+            <h3 className="chart-title text-lg">
+              <svg className="chart-icon w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
                 <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
               </svg>
@@ -593,15 +593,15 @@ export default function ProyeccionCompras() {
             </h3>
           </div>
           {top10Urgentes.length > 0 ? (
-            <div className="chart-wrapper chart-dark-theme">
+            <div className="chart-wrapper chart-dark-theme" style={{ height: '20rem' }}>
               <Bar data={chartData} options={chartOptions} />
             </div>
           ) : (
-            <div className="chart-no-data">
-              <svg className="chart-no-data-icon" fill="currentColor" viewBox="0 0 20 20">
+            <div className="chart-no-data" style={{ height: '20rem' }}>
+              <svg className="chart-no-data-icon w-12 h-12" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
-              <p className="chart-no-data-text">
+              <p className="chart-no-data-text text-sm">
                 No hay productos que requieran restock urgente
               </p>
             </div>
@@ -610,14 +610,14 @@ export default function ProyeccionCompras() {
 
                  {/* Tabla de Proyección */}
          <div className="card">
-           <div className="flex justify-between items-center mb-4">
-             <h3 className="text-lg font-semibold text-white flex items-center">
-               <svg className="w-5 h-5 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+           <div className="flex justify-between items-center mb-3">
+             <h3 className="text-base font-semibold text-white flex items-center">
+               <svg className="w-4 h-4 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                  <path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd" />
                </svg>
                Tabla de Proyección de Compras
              </h3>
-             <div className="label-corporate-secondary">
+             <div className="label-corporate-secondary text-xs">
                {datosFiltrados.length} productos mostrados
                                {!filtroEstado.includes('todos') && (
                   <span className="ml-2 factura-counter">
@@ -645,8 +645,8 @@ export default function ProyeccionCompras() {
             </div>
                     ) : (
             <div className="table-container">
-              <div className="flex justify-between items-center mb-4">
-                <div className="text-sm text-gray-300">
+              <div className="flex justify-between items-center mb-3">
+                <div className="text-xs text-gray-300">
                   Mostrando {datosFiltrados.length} productos
                 </div>
                 <button
@@ -676,9 +676,9 @@ export default function ProyeccionCompras() {
                     const nombreArchivo = `Proyeccion_Compras_${fecha}.xlsx`;
                     XLSX.writeFile(wb, nombreArchivo);
                   }}
-                  className="btn-secondary px-4 py-2 text-sm flex items-center space-x-2"
+                  className="btn-secondary px-3 py-1.5 text-xs flex items-center space-x-1"
                 >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
                   </svg>
                   <span>Exportar Excel</span>
@@ -688,28 +688,28 @@ export default function ProyeccionCompras() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead>
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                    <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
                       Producto {ordenarPor === 'nombre' && (ordenDireccion === 'asc' ? '↑' : '↓')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                    <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
                       Compras en Rango
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                    <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
                       Vendido desde Compra {ordenarPor === 'vendido' && (ordenDireccion === 'asc' ? '↑' : '↓')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                    <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
                       Frecuencia/día {ordenarPor === 'frecuencia' && (ordenDireccion === 'asc' ? '↑' : '↓')}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                    <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
                       Stock Actual
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                    <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
                       Días Restantes
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                    <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
                       Sugerido Comprar
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                    <th className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
                       Estado
                     </th>
                   </tr>
@@ -718,17 +718,17 @@ export default function ProyeccionCompras() {
                   {datosFiltrados.length > 0 ? (
                     datosFiltrados.slice(0, 100).map((item) => (
                       <tr key={`${item.id}-${item.sede}`}>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <div>
                           <div className="text-sm font-medium text-white">
                             {item.nombre}
                           </div>
-                          <div className="text-sm text-gray-300">
+                          <div className="text-xs text-gray-300">
                             SKU: {item.sku || 'N/A'} | Código: {item.internal_code || 'N/A'}
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-white">
                         <div>
                           <div className="font-medium">
                             {item.numero_compras_en_rango} compra{item.numero_compras_en_rango > 1 ? 's' : ''}
@@ -749,7 +749,7 @@ export default function ProyeccionCompras() {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-white">
                         <div>
                           <div>{formatNumber(item.vendido_desde_compra)}</div>
                           <div className="text-xs text-gray-300">
@@ -757,17 +757,17 @@ export default function ProyeccionCompras() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-white">
                         {item.frecuencia_venta_diaria.toFixed(2)}/día
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-white">
                         {item.ignorar_stock ? (
                           <span className="text-gray-500 italic">Ignorado</span>
                         ) : (
                           formatNumber(item.stock_actual)
                         )}
                       </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="px-4 py-3 whitespace-nowrap">
                         {item.dias_inventario_restante === null ? (
                           <span className="text-gray-500 italic text-sm">N/A</span>
                         ) : (
@@ -776,10 +776,10 @@ export default function ProyeccionCompras() {
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-white">
                         {formatNumber(item.sugerido_comprar)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-3 whitespace-nowrap">
                         {item.dias_inventario_restante === null ? (
                           <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
                             HISTÓRICO
@@ -794,9 +794,9 @@ export default function ProyeccionCompras() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="8" className="px-6 py-4 text-center text-gray-300">
-                        No hay datos de proyección disponibles
-                      </td>
+                                          <td colSpan="8" className="px-4 py-3 text-center text-gray-300">
+                      No hay datos de proyección disponibles
+                    </td>
                     </tr>
                   )}
                 </tbody>
@@ -808,15 +808,15 @@ export default function ProyeccionCompras() {
         {/* Explicación de la Lógica */}
         <div className="card">
           <div className="card-header">
-            <h3 className="text-lg font-semibold text-white flex items-center">
-              <svg className="w-5 h-5 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+            <h3 className="text-base font-semibold text-white flex items-center">
+              <svg className="w-4 h-4 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
                 <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
               </svg>
               Lógica de Proyección de Compras
             </h3>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
             <div>
                              <h4 className="font-semibold mb-2 text-blue-400">🎯 Objetivo:</h4>
                <p className="mb-2 text-gray-300">Analizar productos comprados en un rango de tiempo específico que han tenido ventas y proyectar cuánto comprar basado en las ventas realizadas.</p>
@@ -848,34 +848,34 @@ export default function ProyeccionCompras() {
         {/* Resumen */}
         <div className="metrics-grid">
           <div className="metric-card">
-            <div className="metric-number metric-total">
+            <div className="metric-number metric-total text-xl">
               {datosFiltrados.length}
             </div>
-            <div className="metric-label">Total Productos</div>
+            <div className="metric-label text-xs">Total Productos</div>
           </div>
           <div className="metric-card">
-            <div className="metric-number metric-critical">
+            <div className="metric-number metric-critical text-xl">
               {datosFiltrados.filter(item => item.dias_inventario_restante !== null && item.dias_inventario_restante <= 7).length}
             </div>
-            <div className="metric-label">Críticos (≤7 días)</div>
+            <div className="metric-label text-xs">Críticos (≤7 días)</div>
           </div>
           <div className="metric-card">
-            <div className="metric-number metric-urgent">
+            <div className="metric-number metric-urgent text-xl">
               {datosFiltrados.filter(item => item.dias_inventario_restante !== null && item.dias_inventario_restante > 7 && item.dias_inventario_restante <= 14).length}
             </div>
-            <div className="metric-label">Urgentes (8-14 días)</div>
+            <div className="metric-label text-xs">Urgentes (8-14 días)</div>
           </div>
           <div className="metric-card">
-            <div className="metric-number metric-ok">
+            <div className="metric-number metric-ok text-xl">
               {datosFiltrados.filter(item => item.dias_inventario_restante !== null && item.dias_inventario_restante > 30).length}
             </div>
-            <div className="metric-label">OK (&gt;30 días)</div>
+            <div className="metric-label text-xs">OK (&gt;30 días)</div>
           </div>
           <div className="metric-card">
-            <div className="metric-number metric-historical">
+            <div className="metric-number metric-historical text-xl">
               {datosFiltrados.filter(item => item.dias_inventario_restante === null).length}
             </div>
-            <div className="metric-label">Histórico</div>
+            <div className="metric-label text-xs">Histórico</div>
           </div>
         </div>
       </div>

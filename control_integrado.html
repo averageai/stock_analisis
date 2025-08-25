@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Redistribución de Inventario - Integrado</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0f0f0f;
+            font-size: 13px;
+            line-height: 1.4;
+            color: #ffffff;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: #1a1a1a;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 12px 20px;
+            border-bottom: 3px solid #3498db;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .back-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .back-btn:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: #2a2a2a;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #ffffff;
+            font-size: 16px;
+        }
+
+        .header-text {
+            flex: 1;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 2px;
+        }
+
+        .content {
+            padding: 15px;
+        }
+
+        .sede-selector {
+            background: #2a2a2a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .sede-selector h2 {
+            color: #ffffff;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .sede-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .sede-btn {
+            background: #333;
+            color: #ffffff;
+            border: 2px solid #333;
+            padding: 15px 30px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            min-width: 150px;
+        }
+
+        .sede-btn:hover {
+            background: #444;
+            transform: translateY(-2px);
+        }
+
+        .sede-btn.active {
+            background: #3498db;
+            border-color: #3498db;
+            color: white;
+        }
+
+        .sede-btn.active:hover {
+            background: #2980b9;
+            border-color: #2980b9;
+        }
+
+        .sede-icon {
+            font-size: 24px;
+        }
+
+        .update-prompt {
+            background: #1e3a2e;
+            border: 1px solid #4ade80;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+            display: none;
+        }
+
+        .update-prompt h3 {
+            color: #4ade80;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .update-prompt p {
+            color: #a0a0a0;
+            margin-bottom: 15px;
+            font-size: 12px;
+        }
+
+        .update-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-update {
+            background: #4ade80;
+            color: #1e3a2e;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .btn-update:hover {
+            background: #22c55e;
+            transform: translateY(-1px);
+        }
+
+        .btn-update:disabled {
+            background: #6b7280;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-skip {
+            background: #6b7280;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-skip:hover {
+            background: #4b5563;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+        }
+
+        .top-bar {
+            background: #1e3a2e;
+            border: 1px solid #4ade80;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .city-info {
+            font-weight: 600;
+            color: #4ade80;
+        }
+
+        .bodegas-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .bodega-chip {
+            background: #28a745;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 15px;
+            background: #2a2a2a;
+            padding: 8px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1070d1;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: #a0a0a0;
+            text-transform: uppercase;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        .section-header {
+            background: #2c3e50;
+            color: white;
+            padding: 8px 15px;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            font-size: 11px;
+            border-radius: 3px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            background: #218838;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        .table-container {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            max-height: 400px;
+            overflow-y: auto;
+            border-radius: 0 0 8px 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        th {
+            background: #2a2a2a;
+            padding: 6px 8px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 1px solid #333;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            color: #ffffff;
+        }
+
+        td {
+            padding: 4px 8px;
+            border-bottom: 1px solid #333;
+            color: #ffffff;
+        }
+
+        tr:hover {
+            background: #2a2a2a;
+        }
+
+        .priority-badge {
+            background: #007bff;
+            color: #ffffff;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .route-badge {
+            background: #6f42c1;
+            color: #ffffff;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            margin: 0 2px;
+        }
+
+        .quantity-badge {
+            background: #28a745;
+            color: #ffffff;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .error-badge {
+            background: #dc3545;
+            color: #ffffff;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .code {
+            font-family: 'Courier New', monospace;
+            background: #e9ecef;
+            color: #2c3e50;
+            padding: 1px 4px;
+            border-radius: 2px;
+            font-size: 11px;
+        }
+
+        .alert {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid #bee5eb;
+            font-size: 12px;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left-color: #ffc107;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-left-color: #28a745;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            border-left: 3px solid #dc3545;
+            font-size: 12px;
+        }
+
+        .compact-summary {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .summary-box {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 3px;
+            padding: 10px;
+        }
+
+        .summary-title {
+            font-weight: 600;
+            font-size: 12px;
+            color: #ffffff;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 11px;
+        }
+
+        .footer {
+            background: #2c3e50;
+            color: #a0a0a0;
+            text-align: center;
+            padding: 15px;
+            font-size: 12px;
+            margin-top: 30px;
+        }
+
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+            color: #ffffff;
+        }
+
+        /* Nuevos estilos para mejoras */
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-online {
+            background: #4ade80;
+        }
+
+        .status-offline {
+            background: #dc3545;
+        }
+
+        .status-processing {
+            background: #ffc107;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #4ade80;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .timeout-warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            border-left: 4px solid #ffc107;
+            font-size: 12px;
+        }
+
+        .retry-button {
+            background: #ffc107;
+            color: #212529;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            margin-left: 10px;
+        }
+
+        .retry-button:hover {
+            background: #e0a800;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">L</div>
+            <div class="header-text">
+                <h1>Sistema de Redistribución de Inventario - Integrado</h1>
+                <p>Herramienta operativa conectada a base de datos en tiempo real</p>
+            </div>
+            <a href="index.html" class="back-btn">← Volver al MENU</a>
+        </div>
+
+        <div class="content">
+            <div class="sede-selector" id="sedeSelector">
+                <h2>🏢 Seleccionar Sede</h2>
+                <div class="sede-buttons">
+                    <button class="sede-btn" onclick="seleccionarSede('manizales')">
+                        <div class="sede-icon">🏪</div>
+                        <div>Manizales</div>
+                    </button>
+                    <button class="sede-btn" onclick="seleccionarSede('ladorada')">
+                        <div class="sede-icon">🏬</div>
+                        <div>La Dorada</div>
+                    </button>
+                </div>
+            </div>
+
+            <div class="update-prompt" id="updatePrompt">
+                <h3>🔄 ¿Actualizar datos de la base de datos?</h3>
+                <p>Los datos pueden estar desactualizados. ¿Deseas ejecutar una extracción fresca desde la base de datos?</p>
+                <div class="timeout-warning">
+                    <strong>⚠️ Nota:</strong> La extracción puede tomar hasta 60 segundos. Ten paciencia.
+                </div>
+                <div class="update-buttons">
+                    <button class="btn-update" id="btnUpdate" onclick="actualizarDatos()">✅ Sí, Actualizar</button>
+                    <button class="btn-skip" onclick="cargarDatosExistentes()">⏭️ No, Usar Datos Existentes</button>
+                </div>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Procesando archivo...</p>
+                <p id="loadingDetail">Analizando datos...</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <p id="timeoutInfo" style="font-size: 11px; color: #a0a0a0; margin-top: 10px;">
+                    ⏱️ Tiempo estimado: 30-60 segundos
+                </p>
+            </div>
+
+            <div class="results" id="results">
+                <!-- Contenido de resultados aquí -->
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Desarrollado por Humanos + IA en <a href="https://ai.average.lat" target="_blank">average</a></p>
+        </div>
+    </div>
+
+    <script>
+        let datosGlobales = null;
+        let resultadoGlobal = null;
+        let bodegas = [];
+        let ciudadDetectada = '';
+        let sedeSeleccionada = '';
+        let isProcessing = false;
+
+        // Configuración de sedes con nuestros endpoints API
+        const sedesConfig = {
+            manizales: {
+                nombre: 'Manizales',
+                archivo: 'https://average.lat/api/download-excel?sede=manizales',
+                icon: '🏪',
+                color: '#28a745'
+            },
+            ladorada: {
+                nombre: 'La Dorada',
+                archivo: 'https://average.lat/api/download-excel?sede=ladorada',
+                icon: '🏬',
+                color: '#3498db'
+            }
+        };
+
+        // Función para seleccionar sede
+        function seleccionarSede(sede) {
+            if (isProcessing) return; // Evitar múltiples clicks
+            
+            sedeSeleccionada = sede;
+            const config = sedesConfig[sede];
+            
+            // Actualizar UI de botones
+            document.querySelectorAll('.sede-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.closest('.sede-btn').classList.add('active');
+            
+            // Mostrar prompt de actualización
+            document.getElementById('updatePrompt').style.display = 'block';
+        }
+
+        // Función para actualizar datos desde la base de datos
+        async function actualizarDatos() {
+            if (isProcessing) return;
+            
+            const config = sedesConfig[sedeSeleccionada];
+            console.log(`🔄 Actualizando datos de ${config.nombre}...`);
+            
+            // Deshabilitar botones y mostrar loading
+            isProcessing = true;
+            document.getElementById('btnUpdate').disabled = true;
+            document.getElementById('updatePrompt').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            
+            // Iniciar progreso
+            iniciarProgreso();
+            
+            try {
+                actualizarProgreso('Ejecutando extracción desde base de datos...', 10);
+                
+                // Llamar a nuestro endpoint de extracción con timeout
+                const extractResponse = await Promise.race([
+                    fetch('https://average.lat/api/extract-products', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    }),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Timeout: La extracción tardó más de 60 segundos')), 65000)
+                    )
+                ]);
+
+                if (!extractResponse.ok) {
+                    const errorText = await extractResponse.text();
+                    throw new Error(`Error en extracción (${extractResponse.status}): ${errorText}`);
+                }
+
+                const extractResult = await extractResponse.json();
+                console.log('Extracción completada:', extractResult);
+                
+                actualizarProgreso('Extracción completada, descargando archivo...', 50);
+
+                // Verificar si la extracción fue exitosa
+                if (!extractResult.success) {
+                    throw new Error('La extracción no fue exitosa: ' + (extractResult.message || 'Error desconocido'));
+                }
+
+                actualizarProgreso('Descargando archivo actualizado...', 70);
+                
+                // Descargar el archivo actualizado con timeout
+                const response = await Promise.race([
+                    fetch(config.archivo),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Timeout: La descarga tardó más de 30 segundos')), 35000)
+                    )
+                ]);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Error descargando archivo (${response.status}): ${errorText}`);
+                }
+
+                actualizarProgreso('Procesando archivo Excel...', 80);
+                const arrayBuffer = await response.arrayBuffer();
+                const data = new Uint8Array(arrayBuffer);
+                
+                actualizarProgreso('Extrayendo datos de productos...', 85);
+                const workbook = XLSX.read(data, { type: 'array' });
+                
+                actualizarProgreso('Detectando bodegas de la ciudad...', 90);
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                const productos = procesarDatosReales(jsonData);
+                datosGlobales = productos;
+                
+                actualizarProgreso('Calculando redistribución óptima...', 95);
+                const resultado = redistribuirInventario(productos);
+                resultadoGlobal = resultado;
+                
+                actualizarProgreso('Generando reportes...', 100);
+                setTimeout(() => {
+                    mostrarResultados(resultado);
+                    document.getElementById('loading').style.display = 'none';
+                    isProcessing = false;
+                }, 300);
+                
+            } catch (error) {
+                console.error('Error actualizando datos:', error);
+                mostrarError('Error actualizando datos: ' + error.message, true);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('sedeSelector').style.display = 'block';
+                isProcessing = false;
+                document.getElementById('btnUpdate').disabled = false;
+            }
+        }
+
+        // Función para cargar datos existentes sin actualizar
+        async function cargarDatosExistentes() {
+            if (isProcessing) return;
+            
+            const config = sedesConfig[sedeSeleccionada];
+            console.log(`📂 Cargando datos existentes de ${config.nombre}...`);
+            
+            // Deshabilitar botones y mostrar loading
+            isProcessing = true;
+            document.getElementById('updatePrompt').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            
+            // Iniciar progreso
+            iniciarProgreso();
+            
+            try {
+                actualizarProgreso('Descargando archivo existente...', 30);
+                
+                const response = await Promise.race([
+                    fetch(config.archivo),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Timeout: La descarga tardó más de 30 segundos')), 35000)
+                    )
+                ]);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Error descargando archivo (${response.status}): ${errorText}`);
+                }
+
+                actualizarProgreso('Procesando archivo Excel...', 60);
+                const arrayBuffer = await response.arrayBuffer();
+                const data = new Uint8Array(arrayBuffer);
+                
+                actualizarProgreso('Extrayendo datos de productos...', 80);
+                const workbook = XLSX.read(data, { type: 'array' });
+                
+                actualizarProgreso('Detectando bodegas de la ciudad...', 90);
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                const productos = procesarDatosReales(jsonData);
+                datosGlobales = productos;
+                
+                actualizarProgreso('Calculando redistribución óptima...', 95);
+                const resultado = redistribuirInventario(productos);
+                resultadoGlobal = resultado;
+                
+                actualizarProgreso('Generando reportes...', 100);
+                setTimeout(() => {
+                    mostrarResultados(resultado);
+                    document.getElementById('loading').style.display = 'none';
+                    isProcessing = false;
+                }, 300);
+                
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+                mostrarError('Error cargando datos: ' + error.message, true);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('sedeSelector').style.display = 'block';
+                isProcessing = false;
+            }
+        }
+
+        // Funciones de progreso mejoradas
+        function iniciarProgreso() {
+            document.getElementById('progressFill').style.width = '0%';
+        }
+
+        function actualizarProgreso(mensaje, porcentaje = null) {
+            const detailElement = document.getElementById('loadingDetail');
+            if (detailElement) {
+                detailElement.textContent = mensaje;
+            }
+            
+            if (porcentaje !== null) {
+                const progressFill = document.getElementById('progressFill');
+                if (progressFill) {
+                    progressFill.style.width = porcentaje + '%';
+                }
+            }
+        }
+
+        // Función para mostrar errores mejorada
+        function mostrarError(mensaje, mostrarRetry = false) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            
+            let errorContent = `<strong>Error:</strong> ${mensaje}`;
+            
+            if (mostrarRetry) {
+                errorContent += `<button class="retry-button" onclick="retryOperation()">🔄 Reintentar</button>`;
+            }
+            
+            errorDiv.innerHTML = errorContent;
+            document.querySelector('.content').appendChild(errorDiv);
+            
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 15000);
+        }
+
+        // Función para reintentar operación
+        function retryOperation() {
+            if (sedeSeleccionada) {
+                document.getElementById('updatePrompt').style.display = 'block';
+            }
+        }
+
+        function parsearStockPorSede(stockString) {
+            if (!stockString || typeof stockString !== 'string') {
+                return {};
+            }
+            
+            const stock = {};
+            const regex = /([A-Z\s\d]+[A-Z\d])\s*:\s*(-?\d+)/g;
+            let match;
+            
+            while ((match = regex.exec(stockString)) !== null) {
+                let bodega = match[1].trim();
+                const cantidad = parseInt(match[2]);
+                
+                if (bodega === 'Multifamiliar 2') {
+                    bodega = 'Multifamiliar 2';
+                } else if (bodega === 'Multifamiliar') {
+                    bodega = 'Multifamiliar';
+                }
+                
+                stock[bodega] = (stock[bodega] || 0) + cantidad;
+            }
+            
+            return stock;
+        }
+
+        function detectarCiudad(bodegasEncontradas) {
+            console.log('Bodegas encontradas en el archivo:', bodegasEncontradas);
+            
+            const ciudad1 = ['Bodega', 'Multifamiliar', 'El Hogar', 'Surtitodo'];
+            const ciudad2 = ['Bodega', 'Multifamiliar 2', 'Mi Hogar'];
+            
+            const coincidenciasCiudad1 = bodegasEncontradas.filter(b => ciudad1.includes(b)).length;
+            const coincidenciasCiudad2 = bodegasEncontradas.filter(b => ciudad2.includes(b)).length;
+            
+            console.log('Coincidencias Ciudad 1:', coincidenciasCiudad1);
+            console.log('Coincidencias Ciudad 2:', coincidenciasCiudad2);
+            
+            if (coincidenciasCiudad1 > coincidenciasCiudad2) {
+                return {
+                    nombre: 'Ciudad 1',
+                    bodegas: ciudad1.filter(b => bodegasEncontradas.includes(b))
+                };
+            } else if (coincidenciasCiudad2 > 0) {
+                return {
+                    nombre: 'Ciudad 2', 
+                    bodegas: ciudad2.filter(b => bodegasEncontradas.includes(b))
+                };
+            } else {
+                return {
+                    nombre: 'Ciudad (Detectada automáticamente)',
+                    bodegas: bodegasEncontradas
+                };
+            }
+        }
+
+        function procesarDatosReales(jsonData) {
+            console.log('Datos JSON extraídos:', jsonData.length, 'filas');
+            
+            const headers = jsonData[0];
+            const dataRows = jsonData.slice(1);
+            
+            console.log('Headers encontrados:', headers);
+            
+            const codigoIndex = headers.findIndex(h => h === 'Código Interno');
+            const nombreIndex = headers.findIndex(h => h === 'Nombre');
+            const stockPorSedeIndex = headers.findIndex(h => h === 'Stock por Sede');
+            
+            console.log('Índices encontrados:', { codigoIndex, nombreIndex, stockPorSedeIndex });
+            
+            if (codigoIndex === -1 || nombreIndex === -1 || stockPorSedeIndex === -1) {
+                throw new Error('No se encontraron las columnas requeridas en el archivo. Columnas encontradas: ' + headers.join(', '));
+            }
+            
+            const bodegasSet = new Set();
+            
+            const productos = dataRows.map((row, index) => {
+                const codigoInterno = row[codigoIndex];
+                const nombre = row[nombreIndex];
+                const stockString = row[stockPorSedeIndex];
+                
+                if (!codigoInterno || !nombre) {
+                    console.log(`Saltando fila ${index + 2} por datos faltantes`);
+                    return null;
+                }
+                
+                const stockPorBodega = parsearStockPorSede(stockString);
+                
+                Object.keys(stockPorBodega).forEach(bodega => bodegasSet.add(bodega));
+                
+                return {
+                    CodigoInterno: codigoInterno,
+                    Nombre: nombre.trim(),
+                    StockOriginal: stockString,
+                    ...stockPorBodega
+                };
+            }).filter(p => p !== null);
+
+            const bodegasEncontradas = Array.from(bodegasSet);
+            
+            const ciudadInfo = detectarCiudad(bodegasEncontradas);
+            ciudadDetectada = ciudadInfo.nombre;
+            bodegas = ciudadInfo.bodegas;
+            
+            console.log('Ciudad detectada:', ciudadDetectada);
+            console.log('Bodegas de la ciudad:', bodegas);
+            console.log('Total productos procesados:', productos.length);
+            
+            return productos;
+        }
+
+        function redistribuirInventario(productos) {
+            const traslados = [];
+            const resumen = [];
+            const productosSinStock = [];
+            let totalProductosConFaltantes = 0;
+            let totalFaltantesEliminados = 0;
+            
+            productos.forEach(producto => {
+                const { CodigoInterno, Nombre } = producto;
+                const inventarios = {};
+                
+                bodegas.forEach(bodega => {
+                    inventarios[bodega] = producto[bodega] || 0;
+                });
+                
+                const faltantes = [];
+                const excedentes = [];
+                let totalFaltante = 0;
+                let totalExcedente = 0;
+                let tieneNegativos = false;
+                
+                for (const bodega of bodegas) {
+                    if (inventarios[bodega] < 0) {
+                        faltantes.push({ bodega, cantidad: Math.abs(inventarios[bodega]) });
+                        totalFaltante += Math.abs(inventarios[bodega]);
+                        tieneNegativos = true;
+                    } else if (inventarios[bodega] > 0) {
+                        excedentes.push({ bodega, cantidad: inventarios[bodega] });
+                        totalExcedente += inventarios[bodega];
+                    }
+                }
+                
+                if (tieneNegativos) {
+                    totalProductosConFaltantes++;
+                }
+                
+                const tieneStockPositivo = bodegas.some(bodega => inventarios[bodega] > 0);
+                const tieneFaltantes = bodegas.some(bodega => inventarios[bodega] < 0);
+                
+                if (!tieneStockPositivo && tieneFaltantes) {
+                    const totalFaltanteProducto = faltantes.reduce((sum, f) => sum + f.cantidad, 0);
+                    productosSinStock.push({
+                        CodigoInterno,
+                        Nombre,
+                        TotalFaltante: totalFaltanteProducto,
+                        DetalleFaltantes: faltantes.map(f => `${f.bodega}: ${f.cantidad}`).join(', '),
+                        StockOriginal: producto.StockOriginal
+                    });
+                }
+                
+                if (faltantes.length > 0 && excedentes.length > 0) {
+                    const trasladosProducto = calcularTraslados(CodigoInterno, Nombre, faltantes, excedentes);
+                    traslados.push(...trasladosProducto);
+                    
+                    const inventarioFinal = { ...inventarios };
+                    trasladosProducto.forEach(t => {
+                        inventarioFinal[t.desde] -= t.cantidad;
+                        inventarioFinal[t.hacia] += t.cantidad;
+                    });
+                    
+                    const faltanteRestante = Math.max(0, totalFaltante - totalExcedente);
+                    if (faltanteRestante < totalFaltante) {
+                        totalFaltantesEliminados += (totalFaltante - faltanteRestante);
+                    }
+                    
+                    resumen.push({
+                        CodigoInterno,
+                        Nombre,
+                        ...inventarioFinal,
+                        FaltanteOriginal: totalFaltante,
+                        FaltanteRestante: faltanteRestante,
+                        StockOriginal: producto.StockOriginal
+                    });
+                } else {
+                    resumen.push({
+                        CodigoInterno,
+                        Nombre,
+                        ...inventarios,
+                        FaltanteOriginal: totalFaltante,
+                        FaltanteRestante: totalFaltante,
+                        StockOriginal: producto.StockOriginal
+                    });
+                }
+            });
+            
+            return {
+                traslados: agruparTraslados(traslados),
+                resumen,
+                productosSinStock,
+                estadisticas: calcularEstadisticas(productos, resumen, totalProductosConFaltantes, totalFaltantesEliminados)
+            };
+        }
+
+        function calcularTraslados(codigoInterno, nombre, faltantes, excedentes) {
+            const traslados = [];
+            
+            faltantes.sort((a, b) => b.cantidad - a.cantidad);
+            excedentes.sort((a, b) => b.cantidad - a.cantidad);
+            
+            for (const faltante of faltantes) {
+                let cantidadPendiente = faltante.cantidad;
+                
+                for (const excedente of excedentes) {
+                    if (cantidadPendiente <= 0 || excedente.cantidad <= 0) continue;
+                    
+                    const cantidadTraslado = Math.min(cantidadPendiente, excedente.cantidad);
+                    
+                    if (cantidadTraslado > 0) {
+                        traslados.push({
+                            codigoInterno,
+                            nombre,
+                            desde: excedente.bodega,
+                            hacia: faltante.bodega,
+                            cantidad: cantidadTraslado
+                        });
+                        
+                        cantidadPendiente -= cantidadTraslado;
+                        excedente.cantidad -= cantidadTraslado;
+                    }
+                }
+            }
+            
+            return traslados;
+        }
+
+        function agruparTraslados(traslados) {
+            const grupos = {};
+            
+            traslados.forEach(traslado => {
+                const clave = `${traslado.desde}_${traslado.hacia}`;
+                
+                if (!grupos[clave]) {
+                    grupos[clave] = {
+                        desde: traslado.desde,
+                        hacia: traslado.hacia,
+                        productos: [],
+                        totalItems: 0,
+                        productosUnicos: 0
+                    };
+                }
+                
+                grupos[clave].productos.push({
+                    codigoInterno: traslado.codigoInterno,
+                    nombre: traslado.nombre,
+                    cantidad: traslado.cantidad
+                });
+                
+                grupos[clave].totalItems += traslado.cantidad;
+                grupos[clave].productosUnicos = grupos[clave].productos.length;
+            });
+            
+            return Object.values(grupos).sort((a, b) => {
+                const difProductos = b.productosUnicos - a.productosUnicos;
+                if (difProductos !== 0) return difProductos;
+                return b.totalItems - a.totalItems;
+            });
+        }
+
+        function calcularEstadisticas(productos, resumen, totalProductosConFaltantes, totalFaltantesEliminados) {
+            const productosConFaltantesRestantes = resumen.filter(p => p.FaltanteRestante > 0);
+            const eficiencia = totalProductosConFaltantes > 0 ? 
+                ((totalProductosConFaltantes - productosConFaltantesRestantes.length) / totalProductosConFaltantes * 100).toFixed(1) : 100;
+            
+            return {
+                totalProductos: productos.length,
+                productosConFaltantes: totalProductosConFaltantes,
+                productosConFaltantesRestantes: productosConFaltantesRestantes.length,
+                faltantesEliminados: totalFaltantesEliminados,
+                eficiencia: eficiencia,
+                bodegas: bodegas.length
+            };
+        }
+
+        function mostrarResultados(resultado) {
+            const { traslados, resumen, productosSinStock, estadisticas } = resultado;
+            
+            const config = sedesConfig[sedeSeleccionada];
+            document.getElementById('cityInfo').innerHTML = `
+                <span style="color: ${config.color};">${config.icon} ${config.nombre}</span>
+                <span style="color: #a0a0a0; font-size: 12px;">Base de datos conectada</span>
+            `;
+            document.getElementById('bodegasChips').innerHTML = bodegas.map(bodega => 
+                `<span class="bodega-chip">${bodega}</span>`).join('');
+            
+            document.getElementById('statsBar').innerHTML = `
+                <div class="stat-item">
+                    <div class="stat-number">${estadisticas.totalProductos}</div>
+                    <div class="stat-label">Total Productos</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">${estadisticas.productosConFaltantes}</div>
+                    <div class="stat-label">Con Faltantes</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">${traslados.length}</div>
+                    <div class="stat-label">Rutas Traslado</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">${estadisticas.eficiencia}%</div>
+                    <div class="stat-label">Eficiencia</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">${productosSinStock.length}</div>
+                    <div class="stat-label">Requieren Ajuste</div>
+                </div>
+            `;
+            
+            document.getElementById('results').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
+

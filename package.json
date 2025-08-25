@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "extract:products": "node scripts/extract_products_final.js",
-    "test:api": "node scripts/test_api.js"
+    "extract:vercel": "node scripts/extract_products_vercel.js",
+    "test:api": "node scripts/test_api.js",
+    "test:vercel": "node scripts/test_vercel_api.js"
   },
   "dependencies": {
     "chart.js": "^4.4.0",

@@ -1,4 +1,4 @@
-import { extractProducts } from '../../scripts/extract_products_final.js';
+import { extractProducts } from '../../scripts/extract_products_vercel.js';
 
 export default async function handler(req, res) {
   // Solo permitir método POST
@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    console.log('🚀 API: Iniciando extracción de productos...');
+    console.log('🚀 API: Iniciando extracción de productos optimizada para Vercel...');
     
     // Ejecutar la extracción
     const results = await extractProducts();
@@ -23,7 +23,8 @@ export default async function handler(req, res) {
       summary: {
         totalProducts: 0,
         filesGenerated: [],
-        errors: []
+        errors: [],
+        totalProcessingTime: 0
       }
     };
 
@@ -33,13 +34,16 @@ export default async function handler(req, res) {
         response.summary.totalProducts += result.count;
         response.summary.filesGenerated.push({
           sede: sede,
-          filename: result.filePath.split('/').pop(),
-          count: result.count
+          filename: result.filename,
+          count: result.count,
+          processingTime: result.processingTime
         });
+        response.summary.totalProcessingTime = Math.max(response.summary.totalProcessingTime, result.processingTime);
       } else {
         response.summary.errors.push({
           sede: sede,
-          error: result.error
+          error: result.error,
+          processingTime: result.processingTime
         });
       }
     }
@@ -48,7 +52,7 @@ export default async function handler(req, res) {
     const hasErrors = response.summary.errors.length > 0;
     const statusCode = hasErrors ? 207 : 200; // 207 = Multi-Status si hay errores parciales
 
-    console.log(`✅ API: Extracción completada - ${response.summary.totalProducts} productos procesados`);
+    console.log(`✅ API: Extracción completada - ${response.summary.totalProducts} productos procesados en ${response.summary.totalProcessingTime}ms`);
     
     return res.status(statusCode).json(response);
 
